@@ -97,9 +97,12 @@ class Subject:
         elif photo_type in ("mother_50_60", "father_50_60"):
             role = "mother" if photo_type.startswith("mother") else "father"
             parent = self.parents.get(role)
-            if parent is None or parent.birth_year is None:
-                return None
-            birth_year, death_year = parent.birth_year, parent.death_year
+            if parent is not None and parent.birth_year is not None:
+                birth_year, death_year = parent.birth_year, parent.death_year
+            else:
+                # Birth year unknown — estimate: parent was ~27 years older than subject
+                birth_year = self.birth_year - 27
+                death_year = parent.death_year if parent is not None else None
         else:
             raise ValueError(f"Unknown photo_type: {photo_type}")
 

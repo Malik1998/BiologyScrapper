@@ -33,6 +33,7 @@ class SearchImagesStage(Stage):
     def run(self, ctx: PipelineContext) -> None:
         backend_name = self.params.get("backend", "duckduckgo")
         max_results = self.params.get("max_results_per_query", 20)
+        year_step = self.params.get("year_step", 3)
         backend = registry_get("search_backend", backend_name)()
         images_limit = ctx.limits.get("images_per_type")
 
@@ -42,29 +43,48 @@ class SearchImagesStage(Stage):
                     ctx.log(f"[search_images] skip {subject.id}/{photo_type} (already done)")
                     continue
 
-                person_label, _parent = subject.person_for(photo_type)
+                person_label, _ = subject.person_for(photo_type)
                 year_range = subject.year_range(photo_type)
                 if year_range is None:
                     ctx.log(f"[search_images] {subject.id}/{photo_type}: no valid year range, skipping")
                     continue
 
-                query = _build_query(person_label, year_range)
+                # Warn when parent birth year was estimated
+                if photo_type in ("mother_50_60", "father_50_60"):
+                    role = "mother" if photo_type.startswith("mother") else "father"
+                    parent = subject.parents.get(role)
+                    if parent is None or parent.birth_year is None:
+                        ctx.log(
+                            f"[search_images] {subject.id}/{photo_type}: "
+                            f"parent birth year unknown — using estimated range {year_range}"
+                        )
+
                 out_dir = Path("data/raw") / subject.id / photo_type
                 out_dir.mkdir(parents=True, exist_ok=True)
 
-                ctx.log(f"[search_images] {subject.id}/{photo_type}: query={query!r}")
-                try:
-                    results = backend.search(query, max_results=max_results)
-                except Exception as e:
-                    ctx.log(f"[search_images] search failed for {query!r}: {e}")
-                    continue
+                years = _year_points(year_range, year_step)
+                ctx.log(
+                    f"[search_images] {subject.id}/{photo_type}: "
+                    f"{len(years)} queries for {person_label!r} — years {years}"
+                )
 
                 downloaded = 0
-                for raw in results:
+                for year in years:
                     if images_limit and downloaded >= images_limit:
                         break
-                    if _download(raw, subject, photo_type, person_label, year_range, query, out_dir):
-                        downloaded += 1
+                    query = _build_query(person_label, year)
+                    ctx.log(f"[search_images]   query={query!r}")
+                    try:
+                        results = backend.search(query, max_results=max_results)
+                    except Exception as e:
+                        ctx.log(f"[search_images]   search failed: {e}")
+                        continue
+
+                    for raw in results:
+                        if images_limit and downloaded >= images_limit:
+                            break
+                        if _download(raw, subject, photo_type, person_label, year_range, query, out_dir):
+                            downloaded += 1
 
                 ctx.state.mark_done(subject.id, photo_type, self.name, downloaded=downloaded)
                 ctx.log(f"[search_images] {subject.id}/{photo_type}: downloaded {downloaded} image(s)")
@@ -72,9 +92,17 @@ class SearchImagesStage(Stage):
         ctx.state.save()
 
 
-def _build_query(person_label: str, year_range: tuple[int, int]) -> str:
+def _year_points(year_range: tuple[int, int], step: int) -> list[int]:
+    """Return evenly-spaced years within [lo, hi], always including hi."""
     lo, hi = year_range
-    return f"{person_label} {lo}" if lo == hi else f"{person_label} {lo}-{hi}"
+    years = list(range(lo, hi + 1, max(1, step)))
+    if years[-1] != hi:
+        years.append(hi)
+    return years
+
+
+def _build_query(person_label: str, year: int) -> str:
+    return f"{person_label} {year}"
 
 
 def _download(raw, subject, photo_type, person_label, year_range, query, out_dir: Path) -> bool:
