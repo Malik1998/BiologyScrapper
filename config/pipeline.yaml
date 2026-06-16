@@ -1,0 +1,65 @@
+# Pipeline configuration.
+#
+# Run with:
+#   python -m src.pipeline run                                  # all enabled stages
+#   python -m src.pipeline run --stage search_images            # a single stage
+#   python -m src.pipeline run --subjects gwyneth_paltrow        # restrict to one subject
+#   python -m src.pipeline run --limit-images 1 --stage search_images --subjects gwyneth_paltrow
+#       -> cheapest possible smoke test: 1 subject, 1 image per photo_type, no filtering/LLM calls
+#   python -m src.pipeline run --force                           # ignore state/progress.json
+
+stages:
+  - name: load_subjects
+    enabled: true
+    params:
+      config: config/celebrities.json
+      # If true (and OPENROUTER_API_KEY is set), an LLM fills in low-confidence/unknown
+      # parent names before search queries are built.
+      research_unknown_parents: false
+      research_model: "google/gemini-2.5-flash"
+
+  - name: search_images
+    enabled: true
+    params:
+      backend: duckduckgo   # duckduckgo (free) | serpapi | bing
+      max_results_per_query: 20
+
+  - name: filter_chain
+    enabled: true
+    params:
+      # Ordered chain - each filter sees the candidates produced by the previous one.
+      # Disable/reorder/add entries here without touching code.
+      chain:
+        - type: heuristic
+          enabled: true
+          params:
+            min_width: 400
+            min_height: 400
+            max_aspect_ratio: 2.5
+        - type: llm_align
+          enabled: false   # text-only relevance check, needs OPENROUTER_API_KEY
+          params:
+            model: "google/gemini-2.5-flash"
+        - type: vlm_verify
+          enabled: false   # vision identity/age/quality check, needs OPENROUTER_API_KEY
+          params:
+            model: "google/gemini-2.5-flash"
+      top_k: 4
+
+  - name: export_local
+    enabled: true
+    params:
+      output_dir: data/selected
+
+  - name: generate_html
+    enabled: true
+    params:
+      output: data/review/index.html
+
+# Global limits, overridable from the CLI without editing this file:
+#   --subjects <id> [<id> ...]   -> limits.subjects = [<id>, ...]
+#   --limit-subjects N           -> limits.subjects = N (first N)
+#   --limit-images N             -> limits.images_per_type = N
+limits:
+  subjects: null
+  images_per_type: null

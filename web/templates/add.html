@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Add subject &mdash; aging dataset review</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <p><a href="/">&larr; back to subjects</a></p>
+  <h1>Add a new subject</h1>
+  <p>
+    Type a name, e.g. "Tom Hanks". This will look the person up online (birth
+    year, parents), then download and filter candidate photos for all 4 slots
+    (self 50-60, self 30-40, mother 50-60, father 50-60).
+  </p>
+
+  <div class="toolbar">
+    <input id="name-input" type="text" placeholder="Full name" size="30">
+    <button id="start-btn">Start</button>
+  </div>
+
+  <pre id="log"></pre>
+  <div id="result"></div>
+
+  <script>
+    const startBtn = document.getElementById("start-btn");
+    const nameInput = document.getElementById("name-input");
+    const log = document.getElementById("log");
+    const result = document.getElementById("result");
+
+    function appendLog(line) {
+      log.textContent += line + "\n";
+      log.scrollTop = log.scrollHeight;
+    }
+
+    startBtn.addEventListener("click", () => {
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      startBtn.disabled = true;
+      log.textContent = "";
+      result.innerHTML = "";
+      appendLog(`Starting pipeline for "${name}"...`);
+
+      const es = new EventSource("/api/add_subject/stream?name=" + encodeURIComponent(name));
+      es.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === "log") {
+          appendLog(data.message);
+        } else if (data.type === "done") {
+          appendLog("\nDone!");
+          result.innerHTML = `<a href="/subject/${data.subject_id}"><button>View ${data.subject_id}</button></a>`;
+          startBtn.disabled = false;
+          es.close();
+        } else if (data.type === "error") {
+          appendLog("\nERROR: " + data.message);
+          startBtn.disabled = false;
+          es.close();
+        }
+      };
+      es.onerror = () => {
+        appendLog("\n(connection closed)");
+        startBtn.disabled = false;
+        es.close();
+      };
+    });
+
+    nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") startBtn.click();
+    });
+  </script>
+</body>
+</html>

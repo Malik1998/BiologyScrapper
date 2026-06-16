@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ subject.name }} &mdash; review</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+</head>
+<body>
+  <p><a href="/">&larr; back to subjects</a></p>
+  <h1>{{ subject.name }}</h1>
+
+  {% for section in sections %}
+    <h2>{{ section.photo_type }} <small>&mdash; {{ section.person_label }}</small></h2>
+    {% if section.cards %}
+    <div class="cards">
+      {% for card in section.cards %}
+        {% set c = card.candidate %}
+        <div class="card {{ 'selected' if c.status == 'selected' else '' }}"
+             data-subject="{{ subject.id }}"
+             data-photo-type="{{ section.photo_type }}"
+             data-id="{{ c.id }}"
+             data-original="{{ card.original_url }}">
+          <img class="thumb" src="{{ card.image_url }}" loading="lazy">
+          <div class="meta">
+            <div>{{ c.width }}x{{ c.height }}{% if c.cropped_path %} (cropped){% endif %}</div>
+            {% if c.page_url %}<a href="{{ c.page_url }}" target="_blank">source</a>{% endif %}
+          </div>
+          <div class="actions">
+            <button class="select-btn">{{ 'Selected ✓' if c.status == 'selected' else 'Select' }}</button>
+            <button class="crop-btn">Crop</button>
+            {% if c.cropped_path %}<button class="uncrop-btn">Reset crop</button>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-note">No candidates downloaded for this slot yet.</p>
+    {% endif %}
+  {% endfor %}
+
+  <div id="crop-modal" class="modal hidden">
+    <div class="modal-content">
+      <img id="crop-image">
+      <div class="modal-actions">
+        <button id="crop-save">Save crop</button>
+        <button id="crop-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

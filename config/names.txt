@@ -1,0 +1,19 @@
+# One subject name per line. Lines starting with # are ignored.
+# Regenerate config/celebrities.json from this list with:
+#   python -m scripts.build_celebrities_config
+Gwyneth Paltrow
+Kate Winslet
+Julianne Moore
+Sophie Marceau
+Ethan Hawke
+Jodie Foster
+Frances McDormand
+Monica Bellucci
+Barack Obama
+Justin Trudeau
+Angela Merkel
+Steffi Graf
+Katarina Witt
+Gabriela Sabatini
+Princess Anne
+Felipe VI of Spain

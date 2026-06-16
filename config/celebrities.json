@@ -1,0 +1,207 @@
+{
+  "metadata": {
+    "description": "Source-of-truth list of subjects for the aging-prediction labeling dataset. Each subject needs 4 photos: self at 50-60, self at 30-40, mother at 50-60, father at 50-60.",
+    "current_year": 2026,
+    "photo_types": {
+      "self_50_60": "Subject's own photo while aged 50-60",
+      "self_30_40": "Subject's own photo while aged 30-40 (roughly 15-25 years earlier)",
+      "mother_50_60": "Subject's mother's photo while aged 50-60",
+      "father_50_60": "Subject's father's photo while aged 50-60"
+    },
+    "notes": "birth_year/death_year are used by the pipeline to compute target year-ranges for each photo_type (e.g. self_50_60 -> [birth_year+50, birth_year+60], capped at current_year or death_year). confidence on parent entries reflects how sure we are of the parent's identity/name; 'low' or 'unknown' entries should go through an identity-research step (LLM + web search) before image search."
+  },
+  "celebrities": [
+    {
+      "id": "gwyneth_paltrow",
+      "name": "Gwyneth Paltrow",
+      "category": "actor",
+      "birth_year": 1972,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Blythe Danner", "birth_year": 1943, "death_year": null, "confidence": "high" },
+        "father": { "name": "Bruce Paltrow", "birth_year": 1943, "death_year": 2002, "confidence": "high" }
+      },
+      "notes": ""
+    },
+    {
+      "id": "kate_winslet",
+      "name": "Kate Winslet",
+      "category": "actor",
+      "birth_year": 1975,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Sally Winslet", "birth_year": null, "death_year": null, "confidence": "low" },
+        "father": { "name": "Roger Winslet", "birth_year": null, "death_year": null, "confidence": "low" }
+      },
+      "notes": "Parents are not public figures; identity/birth years need confirmation, photo availability likely poor."
+    },
+    {
+      "id": "julianne_moore",
+      "name": "Julianne Moore",
+      "category": "actor",
+      "birth_year": 1960,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Anne Love Smith", "birth_year": 1938, "death_year": 2009, "confidence": "medium" },
+        "father": { "name": "Peter Moore Smith", "birth_year": null, "death_year": null, "confidence": "low" }
+      },
+      "notes": "Currently 65; self_50_60 window is in the past (~2010-2020)."
+    },
+    {
+      "id": "sophie_marceau",
+      "name": "Sophie Marceau",
+      "category": "actor",
+      "birth_year": 1966,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" },
+        "father": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" }
+      },
+      "notes": "Parents are not public figures; needs identity research before image search."
+    },
+    {
+      "id": "ethan_hawke",
+      "name": "Ethan Hawke",
+      "category": "actor",
+      "birth_year": 1970,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Leslie Carrasco Hawke", "birth_year": null, "death_year": null, "confidence": "medium" },
+        "father": { "name": "James Hawke", "birth_year": null, "death_year": null, "confidence": "low" }
+      },
+      "notes": "Mother is a known author/activist (some public photos likely exist); father's identity needs confirmation."
+    },
+    {
+      "id": "jodie_foster",
+      "name": "Jodie Foster",
+      "category": "actor",
+      "birth_year": 1962,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Evelyn 'Brandy' Foster", "birth_year": null, "death_year": 2019, "confidence": "medium" },
+        "father": { "name": "Lucius Fisher Foster III", "birth_year": null, "death_year": null, "confidence": "low" }
+      },
+      "notes": "Currently 63; self_50_60 window is in the past (~2012-2022)."
+    },
+    {
+      "id": "frances_mcdormand",
+      "name": "Frances McDormand",
+      "category": "actor",
+      "birth_year": 1957,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" },
+        "father": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" }
+      },
+      "notes": "Adopted; biological parents are not publicly identified. Likely infeasible for mother/father photos - candidate for substitution."
+    },
+    {
+      "id": "monica_bellucci",
+      "name": "Monica Bellucci",
+      "category": "actor",
+      "birth_year": 1964,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" },
+        "father": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" }
+      },
+      "notes": "Parents are not public figures; needs identity research before image search."
+    },
+    {
+      "id": "barack_obama",
+      "name": "Barack Obama",
+      "category": "politician",
+      "birth_year": 1961,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Ann Dunham", "birth_year": 1942, "death_year": 1995, "confidence": "high" },
+        "father": { "name": "Barack Obama Sr.", "birth_year": 1936, "death_year": 1982, "confidence": "high" }
+      },
+      "notes": "Father died at 46 (never reached 50-60) - infeasible for father_50_60, candidate for substitution. Mother died at 52, so mother_50_60 window is very narrow (~1992-1995) and photos may be scarce."
+    },
+    {
+      "id": "justin_trudeau",
+      "name": "Justin Trudeau",
+      "category": "politician",
+      "birth_year": 1971,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Margaret Trudeau", "birth_year": 1948, "death_year": null, "confidence": "high" },
+        "father": { "name": "Pierre Trudeau", "birth_year": 1919, "death_year": 2000, "confidence": "high" }
+      },
+      "notes": "Pierre Trudeau was PM during his 50-60 window (~1969-1979) - very well documented."
+    },
+    {
+      "id": "angela_merkel",
+      "name": "Angela Merkel",
+      "category": "politician",
+      "birth_year": 1954,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Herlind Kasner", "birth_year": 1928, "death_year": 2019, "confidence": "medium" },
+        "father": { "name": "Horst Kasner", "birth_year": 1926, "death_year": 2011, "confidence": "medium" }
+      },
+      "notes": "Currently 71; self_50_60 window is in the past (~2004-2014). Parent photos likely limited/lower resolution (East Germany era)."
+    },
+    {
+      "id": "steffi_graf",
+      "name": "Steffi Graf",
+      "category": "athlete",
+      "birth_year": 1969,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Heidi Graf", "birth_year": null, "death_year": null, "confidence": "low" },
+        "father": { "name": "Peter Graf", "birth_year": 1938, "death_year": 2013, "confidence": "medium" }
+      },
+      "notes": "Peter Graf was a public figure (tax scandal, tennis manager) - photos likely findable."
+    },
+    {
+      "id": "katarina_witt",
+      "name": "Katarina Witt",
+      "category": "athlete",
+      "birth_year": 1965,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" },
+        "father": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" }
+      },
+      "notes": "Parents are not public figures; needs identity research before image search."
+    },
+    {
+      "id": "gabriela_sabatini",
+      "name": "Gabriela Sabatini",
+      "category": "athlete",
+      "birth_year": 1970,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": null, "birth_year": null, "death_year": null, "confidence": "unknown" },
+        "father": { "name": "Osvaldo Sabatini", "birth_year": null, "death_year": null, "confidence": "low" }
+      },
+      "notes": "Father's name needs confirmation; mother needs identity research."
+    },
+    {
+      "id": "princess_anne",
+      "name": "Princess Anne",
+      "category": "royal",
+      "birth_year": 1950,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Queen Elizabeth II", "birth_year": 1926, "death_year": 2022, "confidence": "high" },
+        "father": { "name": "Prince Philip, Duke of Edinburgh", "birth_year": 1921, "death_year": 2021, "confidence": "high" }
+      },
+      "notes": "Both parents extremely well documented at all ages; abundant high-quality photo archives."
+    },
+    {
+      "id": "felipe_vi",
+      "name": "Felipe VI of Spain",
+      "category": "royal",
+      "birth_year": 1968,
+      "death_year": null,
+      "parents": {
+        "mother": { "name": "Queen Sofia of Spain", "birth_year": 1938, "death_year": null, "confidence": "high" },
+        "father": { "name": "Juan Carlos I of Spain", "birth_year": 1938, "death_year": null, "confidence": "high" }
+      },
+      "notes": "Both parents extremely well documented at all ages; abundant high-quality photo archives."
+    }
+  ]
+}

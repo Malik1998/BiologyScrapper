@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aging dataset review</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1>Aging dataset &mdash; review</h1>
+
+  <div class="toolbar">
+    <a href="/add"><button>+ Add new subject</button></a>
+    <a href="/api/export/zip"><button>Download ZIP of selected photos</button></a>
+    <button onclick="exportLocal()">Save selected to data/selected</button>
+    <button onclick="exportHtml()">Regenerate static HTML gallery</button>
+  </div>
+
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Subject</th>
+        {% for pt in photo_types %}<th>{{ pt }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><a href="/subject/{{ row.subject.id }}">{{ row.subject.name }}</a></td>
+        {% for pt in photo_types %}
+          {% set c = row.counts[pt] %}
+          <td class="{{ 'ok' if c.selected >= 1 else ('empty' if c.total == 0 else 'missing') }}">
+            {{ c.selected }} selected / {{ c.total }} found
+          </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No data yet. Run the pipeline first, e.g.:</p>
+  <pre>python -m src.pipeline run</pre>
+  {% endif %}
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
