@@ -48,7 +48,7 @@ templates = Jinja2Templates(env=Environment(
 
 @app.get("/")
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.get("/library")
@@ -64,13 +64,13 @@ def library(request: Request):
             }
         rows.append({"subject": subject, "counts": counts})
     return templates.TemplateResponse(
-        "library.html", {"request": request, "rows": rows, "photo_types": PHOTO_TYPES}
+        request, "library.html", {"rows": rows, "photo_types": PHOTO_TYPES}
     )
 
 
 @app.get("/add")
 def add_page(request: Request):
-    return templates.TemplateResponse("add.html", {"request": request})
+    return templates.TemplateResponse(request, "add.html")
 
 
 @app.get("/api/add_subject/stream")
@@ -185,7 +185,7 @@ def subject_page(request: Request, subject_id: str):
         sections.append({"photo_type": photo_type, "person_label": person_label, "cards": cards})
 
     return templates.TemplateResponse(
-        "subject.html", {"request": request, "subject": subject, "sections": sections}
+        request, "subject.html", {"subject": subject, "sections": sections}
     )
 
 
