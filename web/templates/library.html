@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aging Dataset &mdash; Library</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="site-title">Aging Dataset</span>
+    <nav class="header-nav">
+      <a href="/" class="btn btn-primary">&larr;&thinsp;Search</a>
+      <a href="/api/export/zip" class="btn btn-ghost">&darr;&thinsp;ZIP</a>
+      <button class="btn btn-ghost" onclick="exportLocal()">Save Selected</button>
+      <button class="btn btn-ghost" onclick="exportHtml()">Regen HTML</button>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="search-section">
+    <div class="search-wrap" id="search-wrap">
+      <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-bar" id="search-input" type="text"
+             placeholder="Filter by name&hellip;" autocomplete="off" spellcheck="false">
+      <div class="search-spinner hidden" id="search-spinner"></div>
+      <div class="search-dropdown hidden" id="search-dropdown"></div>
+    </div>
+    <p class="search-hint">
+      {{ rows|length }} subject{{ 's' if rows|length != 1 else '' }} in the library
+      &mdash; click one or search to browse
+    </p>
+  </div>
+
+  <!-- Subject detail panel (shown after selecting) -->
+  <div class="subject-panel hidden" id="subject-panel">
+    <div class="info-card" id="info-card"></div>
+    <div id="image-sections"></div>
+    <div class="results-actions">
+      <a class="btn btn-primary" id="view-full-link" href="#">Open full review page &rarr;</a>
+      <button class="btn btn-ghost" id="back-btn">Back to grid</button>
+    </div>
+  </div>
+
+  <!-- All-subjects grid -->
+  <div class="all-grid" id="all-grid">
+    {% if not rows %}
+    <div class="empty-state">
+      <p>No subjects yet. <a href="/">Search for a person</a> to download their photos.</p>
+    </div>
+    {% else %}
+    {% for row in rows %}
+    <div class="sgc" data-id="{{ row.subject.id }}" data-name="{{ row.subject.name|lower }}">
+      <div class="sgc-name">{{ row.subject.name }}</div>
+      <div class="sgc-year">b.&thinsp;{{ row.subject.birth_year }}{% if row.subject.death_year %}&thinsp;&ndash;&thinsp;{{ row.subject.death_year }}{% endif %}</div>
+      <div class="sgc-dots">
+        {% for pt in photo_types %}
+          {% set c = row.counts[pt] %}
+          <span class="dot
+            {{ 'dot-ok' if c.selected >= 1 else ('dot-empty' if c.total == 0 else 'dot-warn') }}"
+            title="{{ pt }}: {{ c.selected }} selected / {{ c.total }} total"></span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+</div><!-- .page -->
+
+<!-- Crop modal -->
+<div id="crop-modal" class="modal hidden">
+  <div class="modal-content">
+    <img id="crop-image" alt="">
+    <div class="modal-actions">
+      <button id="crop-save">Save crop</button>
+      <button id="crop-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script>
+"use strict";
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${url} → ${res.status}`);
+  return res.json();
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+async function exportLocal() {
+  const res = await fetch("/api/export/local", { method: "POST" });
+  const data = await res.json();
+  alert("Saved selected photos to " + data.output_dir);
+}
+
+async function exportHtml() {
+  const res = await fetch("/api/export/html", { method: "POST" });
+  const data = await res.json();
+  alert("Wrote gallery to " + data.path);
+}
+
+// ── Subjects index (from template) ────────────────────────────────────────────
+
+const SUBJECTS = [
+  {% for row in rows %}
+  { id: {{ row.subject.id | tojson }}, name: {{ row.subject.name | tojson }}, birth_year: {{ row.subject.birth_year }}, death_year: {{ row.subject.death_year | tojson }} },
+  {% endfor %}
+];
+
+// ── Search / filter ───────────────────────────────────────────────────────────
+
+const searchInput    = document.getElementById("search-input");
+const searchDropdown = document.getElementById("search-dropdown");
+const searchSpinner  = document.getElementById("search-spinner");
+const subjectPanel   = document.getElementById("subject-panel");
+const infoCard       = document.getElementById("info-card");
+const imageSections  = document.getElementById("image-sections");
+const viewFullLink   = document.getElementById("view-full-link");
+const allGrid        = document.getElementById("all-grid");
+
+function filterSubjects(q) {
+  if (!q) return SUBJECTS.slice(0, 12);
+  q = q.toLowerCase();
+  return SUBJECTS.filter(s => s.name.toLowerCase().includes(q)).slice(0, 12);
+}
+
+function buildYearStr(s) {
+  return `b.&thinsp;${s.birth_year}${s.death_year ? "&thinsp;&ndash;&thinsp;" + s.death_year : ""}`;
+}
+
+function renderDropdown(matches, q) {
+  if (!matches.length) {
+    searchDropdown.innerHTML =
+      `<div class="dd-empty">No match &mdash; <a href="/">search the web</a> to add one</div>`;
+  } else {
+    searchDropdown.innerHTML = matches.map(s =>
+      `<div class="dd-item" data-id="${s.id}" tabindex="0">
+         <span class="dd-name">${highlight(escHtml(s.name), q)}</span>
+         <span class="dd-meta">${buildYearStr(s)}</span>
+       </div>`
+    ).join("");
+    searchDropdown.querySelectorAll(".dd-item").forEach(el => {
+      el.addEventListener("click", () => {
+        searchInput.value = el.querySelector(".dd-name").textContent;
+        searchDropdown.classList.add("hidden");
+        loadSubject(el.dataset.id);
+      });
+      el.addEventListener("keydown", e => {
+        if (e.key === "Enter") el.click();
+        if (e.key === "ArrowDown") (el.nextElementSibling || el).focus();
+        if (e.key === "ArrowUp")  (el.previousElementSibling || el).focus();
+      });
+    });
+  }
+  searchDropdown.classList.remove("hidden");
+}
+
+function highlight(text, q) {
+  if (!q) return text;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx < 0) return text;
+  return text.slice(0, idx) + `<mark>${text.slice(idx, idx + q.length)}</mark>` + text.slice(idx + q.length);
+}
+
+searchInput.addEventListener("input", () => {
+  const q = searchInput.value.trim();
+  allGrid.querySelectorAll(".sgc").forEach(card => {
+    card.style.display = !q || card.dataset.name.includes(q.toLowerCase()) ? "" : "none";
+  });
+  if (!q) { searchDropdown.classList.add("hidden"); return; }
+  renderDropdown(filterSubjects(q), q);
+});
+
+searchInput.addEventListener("keydown", e => {
+  if (e.key === "Escape") { searchDropdown.classList.add("hidden"); searchInput.blur(); }
+  if (e.key === "ArrowDown") {
+    const first = searchDropdown.querySelector(".dd-item");
+    if (first) first.focus();
+  }
+  if (e.key === "Enter") {
+    const q = searchInput.value.trim();
+    const m = filterSubjects(q);
+    if (m.length === 1) { searchDropdown.classList.add("hidden"); loadSubject(m[0].id); }
+    else {
+      const exact = m.find(s => s.name.toLowerCase() === q.toLowerCase());
+      if (exact) { searchDropdown.classList.add("hidden"); loadSubject(exact.id); }
+    }
+  }
+});
+
+document.addEventListener("click", e => {
+  if (!document.getElementById("search-wrap").contains(e.target))
+    searchDropdown.classList.add("hidden");
+});
+
+// Click grid card
+allGrid.addEventListener("click", e => {
+  const card = e.target.closest(".sgc");
+  if (card) {
+    searchInput.value = card.querySelector(".sgc-name").textContent;
+    searchDropdown.classList.add("hidden");
+    loadSubject(card.dataset.id);
+  }
+});
+
+// Back button
+document.getElementById("back-btn").addEventListener("click", () => {
+  subjectPanel.classList.add("hidden");
+  allGrid.style.display = "";
+  searchInput.value = "";
+  allGrid.querySelectorAll(".sgc").forEach(c => c.style.display = "");
+});
+
+// ── Load subject data ─────────────────────────────────────────────────────────
+
+async function loadSubject(id) {
+  searchSpinner.classList.remove("hidden");
+  allGrid.style.display = "none";
+  subjectPanel.classList.remove("hidden");
+  infoCard.innerHTML = `<div class="loading-pulse">Loading&hellip;</div>`;
+  imageSections.innerHTML = "";
+
+  try {
+    const res = await fetch(`/api/subject/${id}/data`);
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    renderInfoCard(data);
+    renderImageSections(data);
+    viewFullLink.href = `/subject/${id}`;
+  } catch (e) {
+    infoCard.innerHTML = `<p class="err">Failed to load: ${escHtml(e.message)}</p>`;
+  } finally {
+    searchSpinner.classList.add("hidden");
+  }
+}
+
+// ── Render subject info card ──────────────────────────────────────────────────
+
+function renderInfoCard(d) {
+  const age  = d.age != null
+    ? `<span class="info-tag">Age&thinsp;<strong>${d.age}</strong>&thinsp;in&thinsp;${d.current_year}</span>`
+    : "";
+  const died = d.death_year
+    ? `<span class="info-tag">Died&thinsp;<strong>${d.death_year}</strong></span>`
+    : "";
+  const cat  = d.category
+    ? `<span class="info-badge">${escHtml(d.category)}</span>`
+    : "";
+
+  const parentHtml = Object.entries(d.parents).map(([role, p]) => {
+    const name  = p && p.name ? escHtml(p.name) : `Unknown ${role}`;
+    const byear = p && p.birth_year ? `b.&thinsp;${p.birth_year}` : "";
+    const dyear = p && p.death_year ? `&thinsp;&ndash;&thinsp;${p.death_year}` : "";
+    return `<div class="parent-chip">
+      <div class="pc-role">${role}</div>
+      <div class="pc-name">${name}</div>
+      ${byear ? `<div class="pc-years">${byear}${dyear}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  infoCard.innerHTML = `
+    <h2 class="ic-name">${escHtml(d.name)}</h2>
+    <div class="ic-meta">
+      <span class="info-tag">Born&thinsp;<strong>${d.birth_year}</strong></span>
+      ${died}${age}${cat}
+    </div>
+    <div class="ic-parents">${parentHtml}</div>`;
+}
+
+// ── Render image sections ─────────────────────────────────────────────────────
+
+function renderImageSections(d) {
+  imageSections.innerHTML = "";
+  for (const sec of d.sections) {
+    const yr = sec.year_range
+      ? `<span class="yr-badge">${sec.year_range[0]}&ndash;${sec.year_range[1]}</span>`
+      : "";
+    const cardsHtml = sec.cards.length
+      ? sec.cards.map(c => imgCardHtml(d.id, sec.photo_type, c)).join("")
+      : `<p class="empty-row">No candidates downloaded yet. <a href="/">Run a search</a>.</p>`;
+
+    const div = document.createElement("div");
+    div.className = "img-section";
+    div.innerHTML = `
+      <div class="section-hdr">
+        <span class="section-slug">${sec.photo_type.replace(/_/g, " ")}</span>
+        <span class="section-person">${escHtml(sec.person_label)}</span>
+        ${yr}
+      </div>
+      <div class="img-row">${cardsHtml}</div>`;
+    imageSections.appendChild(div);
+  }
+  wireImageCards();
+}
+
+function imgCardHtml(subjectId, photoType, c) {
+  const sel    = c.status === "selected";
+  const dims   = c.width && c.height ? `${c.width}&times;${c.height}` : "";
+  const crop   = c.has_crop ? " &bull; cropped" : "";
+  const srcLink = c.page_url
+    ? ` &bull; <a class="src-link" href="${escHtml(c.page_url)}" target="_blank" rel="noopener">source</a>`
+    : "";
+  return `
+    <div class="img-card${sel ? " selected" : ""}"
+         data-subject="${subjectId}" data-pt="${photoType}"
+         data-id="${c.id}" data-original="${escHtml(c.original_url)}">
+      <img class="ic-thumb" src="${escHtml(c.image_url)}" loading="lazy" alt="">
+      <div class="ic-body">
+        <div class="ic-dims">${dims}${crop}${srcLink}</div>
+        <div class="ic-actions">
+          <button class="ic-btn sel-btn${sel ? " sel-active" : ""}">
+            ${sel ? "Selected&thinsp;✓" : "Select"}
+          </button>
+          <button class="ic-btn crop-btn-inline">Crop</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function wireImageCards() {
+  imageSections.querySelectorAll(".sel-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const card = btn.closest(".img-card");
+      const selected = !card.classList.contains("selected");
+      try {
+        const data = await postJson("/api/select", {
+          subject_id: card.dataset.subject,
+          photo_type: card.dataset.pt,
+          candidate_id: card.dataset.id,
+          selected,
+        });
+        card.classList.toggle("selected", data.status === "selected");
+        btn.textContent = data.status === "selected" ? "Selected ✓" : "Select";
+        btn.classList.toggle("sel-active", data.status === "selected");
+      } catch (e) { alert("Error: " + e); }
+    });
+  });
+
+  imageSections.querySelectorAll(".crop-btn-inline").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeCropCard = btn.closest(".img-card");
+      const img = document.getElementById("crop-image");
+      img.src = activeCropCard.dataset.original;
+      document.getElementById("crop-modal").classList.remove("hidden");
+      img.onload = () => {
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(img, { viewMode: 1, autoCropArea: 1 });
+      };
+    });
+  });
+}
+
+// ── Crop modal ────────────────────────────────────────────────────────────────
+
+let cropper = null;
+let activeCropCard = null;
+
+function closeCropModal() {
+  if (cropper) { cropper.destroy(); cropper = null; }
+  activeCropCard = null;
+  document.getElementById("crop-modal").classList.add("hidden");
+}
+
+document.getElementById("crop-cancel").addEventListener("click", closeCropModal);
+
+document.getElementById("crop-save").addEventListener("click", async () => {
+  if (!cropper || !activeCropCard) return;
+  const data = cropper.getData(true);
+  try {
+    const result = await postJson("/api/crop", {
+      subject_id: activeCropCard.dataset.subject,
+      photo_type: activeCropCard.dataset.pt,
+      candidate_id: activeCropCard.dataset.id,
+      left: data.x, top: data.y,
+      right: data.x + data.width, bottom: data.y + data.height,
+    });
+    activeCropCard.querySelector(".ic-thumb").src = result.cropped_url + "?t=" + Date.now();
+  } catch (e) { alert("Crop failed: " + e); }
+  finally { closeCropModal(); }
+});
+</script>
+</body>
+</html>

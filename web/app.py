@@ -22,7 +22,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from starlette.requests import Request
 
-from src.models import PHOTO_TYPES
+from src.models import CURRENT_YEAR, PHOTO_TYPES
 from src.stages.export_local import ExportLocalStage
 from src.stages.generate_html import GenerateHtmlStage
 
@@ -40,6 +40,11 @@ templates = Jinja2Templates(directory="web/templates")
 
 @app.get("/")
 def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/library")
+def library(request: Request):
     rows = []
     for subject in da.list_subjects():
         counts = {}
@@ -51,7 +56,7 @@ def index(request: Request):
             }
         rows.append({"subject": subject, "counts": counts})
     return templates.TemplateResponse(
-        "index.html", {"request": request, "rows": rows, "photo_types": PHOTO_TYPES}
+        "library.html", {"request": request, "rows": rows, "photo_types": PHOTO_TYPES}
     )
 
 
@@ -94,6 +99,59 @@ def add_subject_stream(name: str):
                 break
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.get("/api/subject/{subject_id}/data")
+def subject_data_api(subject_id: str):
+    subject = da.get_subject(subject_id)
+    if subject is None:
+        raise HTTPException(404, f"Unknown subject: {subject_id}")
+
+    sections = []
+    for photo_type in PHOTO_TYPES:
+        candidates = da.load_candidates(subject_id, photo_type)
+        person_label, _ = subject.person_for(photo_type)
+        year_range = subject.year_range(photo_type)
+        cards = [
+            {
+                "id": c.id,
+                "image_url": da.to_url(c.cropped_path or c.local_path),
+                "original_url": da.to_url(c.local_path),
+                "status": c.status,
+                "width": c.width,
+                "height": c.height,
+                "page_url": c.page_url,
+                "has_crop": bool(c.cropped_path),
+            }
+            for c in candidates
+        ]
+        sections.append({
+            "photo_type": photo_type,
+            "person_label": person_label,
+            "year_range": list(year_range) if year_range else None,
+            "cards": cards,
+        })
+
+    age = CURRENT_YEAR - subject.birth_year if not subject.death_year else None
+
+    return {
+        "id": subject.id,
+        "name": subject.name,
+        "birth_year": subject.birth_year,
+        "death_year": subject.death_year,
+        "age": age,
+        "current_year": CURRENT_YEAR,
+        "category": subject.category,
+        "parents": {
+            role: (
+                {"name": p.name, "birth_year": p.birth_year, "death_year": p.death_year}
+                if p
+                else None
+            )
+            for role, p in subject.parents.items()
+        },
+        "sections": sections,
+    }
 
 
 @app.get("/subject/{subject_id}")

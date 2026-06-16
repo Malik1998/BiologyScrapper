@@ -2,46 +2,375 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Aging dataset review</title>
+  <title>Aging Dataset &mdash; Search</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 </head>
 <body>
-  <h1>Aging dataset &mdash; review</h1>
 
-  <div class="toolbar">
-    <a href="/add"><button>+ Add new subject</button></a>
-    <a href="/api/export/zip"><button>Download ZIP of selected photos</button></a>
-    <button onclick="exportLocal()">Save selected to data/selected</button>
-    <button onclick="exportHtml()">Regenerate static HTML gallery</button>
+<header class="site-header">
+  <div class="header-inner">
+    <span class="site-title">Aging Dataset</span>
+    <nav class="header-nav">
+      <a href="/library" class="btn btn-ghost">Library &rarr;</a>
+      <a href="/api/export/zip" class="btn btn-ghost">&darr;&thinsp;ZIP</a>
+    </nav>
+  </div>
+</header>
+
+<div class="search-page" id="search-page">
+
+  <!-- Hero: shrinks once search starts -->
+  <div class="search-hero" id="search-hero">
+    <div class="hero-text" id="hero-text">
+      <h1 class="hero-title">Find a person</h1>
+      <p class="hero-desc">
+        Searches the web for birth year &amp; parents, then downloads and filters
+        candidate photos for all 4 aging slots.
+      </p>
+    </div>
+    <div class="search-input-wrap" id="search-input-wrap">
+      <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-bar" id="search-input" type="text"
+             placeholder='Full name, e.g. "Tom Hanks"'
+             autocomplete="off" spellcheck="false">
+      <button class="search-submit" id="search-btn" title="Start">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
+    <p class="search-hint" id="search-hint">
+      Research &rarr; image search &rarr; filter &rarr; results
+    </p>
   </div>
 
-  {% if rows %}
-  <table>
-    <thead>
-      <tr>
-        <th>Subject</th>
-        {% for pt in photo_types %}<th>{{ pt }}</th>{% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr>
-        <td><a href="/subject/{{ row.subject.id }}">{{ row.subject.name }}</a></td>
-        {% for pt in photo_types %}
-          {% set c = row.counts[pt] %}
-          <td class="{{ 'ok' if c.selected >= 1 else ('empty' if c.total == 0 else 'missing') }}">
-            {{ c.selected }} selected / {{ c.total }} found
-          </td>
-        {% endfor %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p>No data yet. Run the pipeline first, e.g.:</p>
-  <pre>python -m src.pipeline run</pre>
-  {% endif %}
+  <!-- Pipeline progress (appears after search starts) -->
+  <div class="pipeline-area hidden" id="pipeline-area">
+    <div class="pipeline-status" id="pipeline-status">
+      <div class="ps-spinner" id="ps-spinner"></div>
+      <span class="ps-label" id="ps-label">Starting&hellip;</span>
+    </div>
+    <div class="pipeline-log" id="pipeline-log"></div>
+  </div>
 
-  <script src="/static/app.js"></script>
+  <!-- Results (appear after pipeline done) -->
+  <div class="results-section hidden" id="results-section">
+    <div class="info-card" id="info-card"></div>
+    <div id="image-sections"></div>
+    <div class="results-actions">
+      <a class="btn btn-primary" id="view-full-link" href="#">Open full review page &rarr;</a>
+      <a class="btn btn-ghost" href="/library">Browse library &rarr;</a>
+    </div>
+  </div>
+
+</div><!-- .search-page -->
+
+<!-- Crop modal -->
+<div id="crop-modal" class="modal hidden">
+  <div class="modal-content">
+    <img id="crop-image" alt="">
+    <div class="modal-actions">
+      <button id="crop-save">Save crop</button>
+      <button id="crop-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script>
+"use strict";
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${url} → ${res.status}`);
+  return res.json();
+}
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+
+const searchPage    = document.getElementById("search-page");
+const searchInput   = document.getElementById("search-input");
+const searchBtn     = document.getElementById("search-btn");
+const heroText      = document.getElementById("hero-text");
+const searchHint    = document.getElementById("search-hint");
+const pipelineArea  = document.getElementById("pipeline-area");
+const psSpinner     = document.getElementById("ps-spinner");
+const psLabel       = document.getElementById("ps-label");
+const pipelineLog   = document.getElementById("pipeline-log");
+const resultsSection = document.getElementById("results-section");
+const infoCard      = document.getElementById("info-card");
+const imageSections = document.getElementById("image-sections");
+const viewFullLink  = document.getElementById("view-full-link");
+
+// ── Pipeline start ────────────────────────────────────────────────────────────
+
+function startSearch() {
+  const name = searchInput.value.trim();
+  if (!name || searchBtn.disabled) return;
+
+  searchBtn.disabled = true;
+  searchInput.disabled = true;
+
+  // Collapse hero to a compact bar
+  searchPage.classList.add("searching");
+  heroText.classList.add("hidden");
+  searchHint.classList.add("hidden");
+
+  // Reset & show pipeline area
+  pipelineLog.innerHTML = "";
+  psSpinner.style.display = "";
+  psLabel.textContent = "Starting pipeline…";
+  pipelineArea.classList.remove("hidden");
+  resultsSection.classList.add("hidden");
+
+  const es = new EventSource("/api/add_subject/stream?name=" + encodeURIComponent(name));
+
+  es.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === "log") {
+      appendLog(data.message);
+    } else if (data.type === "done") {
+      appendLog(data.subject_id ? `Done — subject id: ${data.subject_id}` : "Done!", "ok");
+      es.close();
+      finishSearch(data.subject_id);
+    } else {
+      appendLog("ERROR: " + data.message, "err");
+      es.close();
+      resetControls();
+    }
+  };
+  es.onerror = () => {
+    appendLog("Connection closed.", "warn");
+    es.close();
+    resetControls();
+  };
+}
+
+function resetControls() {
+  psSpinner.style.display = "none";
+  searchBtn.disabled = false;
+  searchInput.disabled = false;
+}
+
+// ── Log line rendering ────────────────────────────────────────────────────────
+
+const LOG_PATTERNS = [
+  [/error|fail|exception/i,            "err",      "✗"],
+  [/done!?$|complete|finish|export/i,  "ok",       "✓"],
+  [/research|resolv|look.?up|searching the web/i, "research", "◈"],
+  [/found|birth.?year|category|parent|mother|father/i, "info", "·"],
+  [/search(ing)?|query/i,             "search",   "↗"],
+  [/download|fetch|saving|saved/i,    "download", "↓"],
+  [/filter|heuristic|vlm|llm|select/i,"filter",   "⌥"],
+  [/stage|running/i,                  "stage",    "▷"],
+];
+
+function classifyLog(msg) {
+  for (const [re, cls, icon] of LOG_PATTERNS) {
+    if (re.test(msg)) return { cls, icon };
+  }
+  return { cls: "default", icon: "·" };
+}
+
+function appendLog(msg, forceClass) {
+  const { cls, icon } = forceClass
+    ? { cls: forceClass, icon: forceClass === "ok" ? "✓" : forceClass === "err" ? "✗" : "·" }
+    : classifyLog(msg);
+
+  const row = document.createElement("div");
+  row.className = `ll ll-${cls}`;
+  row.innerHTML = `<span class="ll-icon">${icon}</span><span class="ll-text">${escHtml(msg)}</span>`;
+  pipelineLog.appendChild(row);
+  pipelineLog.scrollTop = pipelineLog.scrollHeight;
+
+  // Update compact status label
+  psLabel.textContent = msg.length > 72 ? msg.slice(0, 72) + "…" : msg;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+
+async function finishSearch(subjectId) {
+  psSpinner.style.display = "none";
+  viewFullLink.href = `/subject/${subjectId}`;
+
+  try {
+    const res = await fetch(`/api/subject/${subjectId}/data`);
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    renderInfoCard(data);
+    renderImageSections(data);
+    resultsSection.classList.remove("hidden");
+  } catch (e) {
+    appendLog("Could not load results: " + e.message, "err");
+  } finally {
+    resetControls();
+  }
+}
+
+function renderInfoCard(d) {
+  const age  = d.age != null
+    ? `<span class="info-tag">Age&thinsp;<strong>${d.age}</strong>&thinsp;in&thinsp;${d.current_year}</span>`
+    : "";
+  const died = d.death_year
+    ? `<span class="info-tag">Died&thinsp;<strong>${d.death_year}</strong></span>`
+    : "";
+  const cat  = d.category
+    ? `<span class="info-badge">${escHtml(d.category)}</span>`
+    : "";
+
+  const parentHtml = Object.entries(d.parents).map(([role, p]) => {
+    const name  = p && p.name       ? escHtml(p.name)   : `Unknown ${role}`;
+    const byear = p && p.birth_year ? `b.&thinsp;${p.birth_year}` : "";
+    const dyear = p && p.death_year ? `&thinsp;&ndash;&thinsp;${p.death_year}` : "";
+    return `<div class="parent-chip">
+      <div class="pc-role">${role}</div>
+      <div class="pc-name">${name}</div>
+      ${byear ? `<div class="pc-years">${byear}${dyear}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  infoCard.innerHTML = `
+    <h2 class="ic-name">${escHtml(d.name)}</h2>
+    <div class="ic-meta">
+      <span class="info-tag">Born&thinsp;<strong>${d.birth_year}</strong></span>
+      ${died}${age}${cat}
+    </div>
+    <div class="ic-parents">${parentHtml}</div>`;
+}
+
+function renderImageSections(d) {
+  imageSections.innerHTML = "";
+  for (const sec of d.sections) {
+    const yr = sec.year_range
+      ? `<span class="yr-badge">${sec.year_range[0]}&ndash;${sec.year_range[1]}</span>`
+      : "";
+    const cardsHtml = sec.cards.length
+      ? sec.cards.map(c => imgCardHtml(d.id, sec.photo_type, c)).join("")
+      : `<p class="empty-row">No candidates downloaded yet.</p>`;
+
+    const div = document.createElement("div");
+    div.className = "img-section";
+    div.innerHTML = `
+      <div class="section-hdr">
+        <span class="section-slug">${sec.photo_type.replace(/_/g, " ")}</span>
+        <span class="section-person">${escHtml(sec.person_label)}</span>
+        ${yr}
+      </div>
+      <div class="img-row">${cardsHtml}</div>`;
+    imageSections.appendChild(div);
+  }
+  wireImageCards();
+}
+
+function imgCardHtml(subjectId, photoType, c) {
+  const sel   = c.status === "selected";
+  const dims  = c.width && c.height ? `${c.width}&times;${c.height}` : "";
+  const crop  = c.has_crop ? " &bull; cropped" : "";
+  const src   = c.image_url;
+  const srcLink = c.page_url
+    ? ` &bull; <a class="src-link" href="${escHtml(c.page_url)}" target="_blank" rel="noopener">source</a>`
+    : "";
+  return `
+    <div class="img-card${sel ? " selected" : ""}"
+         data-subject="${subjectId}" data-pt="${photoType}"
+         data-id="${c.id}" data-original="${escHtml(c.original_url)}">
+      <img class="ic-thumb" src="${escHtml(src)}" loading="lazy" alt="">
+      <div class="ic-body">
+        <div class="ic-dims">${dims}${crop}${srcLink}</div>
+        <div class="ic-actions">
+          <button class="ic-btn sel-btn${sel ? " sel-active" : ""}">
+            ${sel ? "Selected ✓" : "Select"}
+          </button>
+          <button class="ic-btn crop-btn-inline">Crop</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function wireImageCards() {
+  imageSections.querySelectorAll(".sel-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const card = btn.closest(".img-card");
+      const selected = !card.classList.contains("selected");
+      try {
+        const data = await postJson("/api/select", {
+          subject_id: card.dataset.subject,
+          photo_type: card.dataset.pt,
+          candidate_id: card.dataset.id,
+          selected,
+        });
+        card.classList.toggle("selected", data.status === "selected");
+        btn.textContent = data.status === "selected" ? "Selected ✓" : "Select";
+        btn.classList.toggle("sel-active", data.status === "selected");
+      } catch (e) { alert("Error: " + e); }
+    });
+  });
+
+  imageSections.querySelectorAll(".crop-btn-inline").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeCropCard = btn.closest(".img-card");
+      const img = document.getElementById("crop-image");
+      img.src = activeCropCard.dataset.original;
+      document.getElementById("crop-modal").classList.remove("hidden");
+      img.onload = () => {
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(img, { viewMode: 1, autoCropArea: 1 });
+      };
+    });
+  });
+}
+
+// ── Crop modal ────────────────────────────────────────────────────────────────
+
+let cropper = null;
+let activeCropCard = null;
+
+function closeCropModal() {
+  if (cropper) { cropper.destroy(); cropper = null; }
+  activeCropCard = null;
+  document.getElementById("crop-modal").classList.add("hidden");
+}
+
+document.getElementById("crop-cancel").addEventListener("click", closeCropModal);
+
+document.getElementById("crop-save").addEventListener("click", async () => {
+  if (!cropper || !activeCropCard) return;
+  const data = cropper.getData(true);
+  try {
+    const result = await postJson("/api/crop", {
+      subject_id: activeCropCard.dataset.subject,
+      photo_type: activeCropCard.dataset.pt,
+      candidate_id: activeCropCard.dataset.id,
+      left: data.x, top: data.y,
+      right: data.x + data.width, bottom: data.y + data.height,
+    });
+    activeCropCard.querySelector(".ic-thumb").src = result.cropped_url + "?t=" + Date.now();
+  } catch (e) { alert("Crop failed: " + e); }
+  finally { closeCropModal(); }
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+
+searchBtn.addEventListener("click", startSearch);
+searchInput.addEventListener("keydown", e => { if (e.key === "Enter") startSearch(); });
+</script>
 </body>
 </html>
