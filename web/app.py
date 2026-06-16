@@ -15,6 +15,10 @@ import threading
 import zipfile
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -122,6 +126,9 @@ def subject_data_api(subject_id: str):
                 "height": c.height,
                 "page_url": c.page_url,
                 "has_crop": bool(c.cropped_path),
+                "title": c.title,
+                "description": c.description,
+                "query": c.query,
             }
             for c in candidates
         ]
