@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 CURRENT_YEAR = datetime.date.today().year
 
-PHOTO_TYPES = ["self_50_60", "self_30_40", "mother_50_60", "father_50_60"]
+PHOTO_TYPES = ["self_50_60", "self_30_40", "self_with_parents_30_40", "mother_50_60", "father_50_60"]
 
 
 @dataclass
@@ -73,6 +73,8 @@ class Subject:
 
     def person_for(self, photo_type: str) -> tuple[str, Optional[ParentInfo]]:
         """Return (display name to search for, ParentInfo or None) for a photo_type."""
+        if photo_type == "self_with_parents_30_40":
+            return f"{self.name} with parents", None
         if photo_type.startswith("self_"):
             return self.name, None
         if photo_type == "mother_50_60":
@@ -92,7 +94,7 @@ class Subject:
         subject's lifespan and the current year. Returns None if no sensible
         window exists (e.g. parent identity/birth year unknown, or the person
         died before reaching the target age range)."""
-        if photo_type in ("self_50_60", "self_30_40"):
+        if photo_type in ("self_50_60", "self_30_40", "self_with_parents_30_40"):
             birth_year, death_year = self.birth_year, self.death_year
         elif photo_type in ("mother_50_60", "father_50_60"):
             role = "mother" if photo_type.startswith("mother") else "father"
