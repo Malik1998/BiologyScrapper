@@ -23,6 +23,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from jinja2 import Environment, FileSystemLoader
 from pydantic import BaseModel
 from starlette.requests import Request
 
@@ -39,7 +40,10 @@ Path("data").mkdir(exist_ok=True)
 app.mount("/data", StaticFiles(directory="data"), name="data")
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
-templates = Jinja2Templates(directory="web/templates")
+templates = Jinja2Templates(env=Environment(
+    loader=FileSystemLoader("web/templates"),
+    cache_size=0,  # workaround: Jinja2 cache key includes unhashable dict on Python 3.14
+))
 
 
 @app.get("/")
