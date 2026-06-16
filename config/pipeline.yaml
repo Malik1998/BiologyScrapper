@@ -23,6 +23,7 @@ stages:
     params:
       backend: duckduckgo   # duckduckgo (free) | serpapi | bing
       max_results_per_query: 20
+      year_step: 3          # one query per N years within the target range (e.g. step=3 → ~4 queries per slot)
 
   - name: filter_chain
     enabled: true

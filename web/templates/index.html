@@ -84,7 +84,25 @@
   </div>
 </div>
 
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox hidden">
+  <button class="lb-close" id="lb-close">&times;</button>
+  <div class="lb-counter" id="lb-counter"></div>
+  <button class="lb-nav lb-prev" id="lb-prev">&#8249;</button>
+  <button class="lb-nav lb-next" id="lb-next">&#8250;</button>
+  <div class="lb-inner">
+    <div class="lb-img-wrap"><img id="lb-img" src="" alt=""></div>
+    <div class="lb-info">
+      <div id="lb-title"></div>
+      <div id="lb-desc"></div>
+      <div id="lb-meta"></div>
+      <a id="lb-source" href="#" target="_blank" rel="noopener">Open source page &rarr;</a>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script src="/static/gallery.js"></script>
 <script>
 "use strict";
 
@@ -258,12 +276,15 @@ function renderInfoCard(d) {
 
 function renderImageSections(d) {
   imageSections.innerHTML = "";
-  for (const sec of d.sections) {
+  window.lbSections = [];
+  for (const [si, sec] of d.sections.entries()) {
+    window.lbSections.push(sec.cards.map(c => ({ ...c, subject_id: d.id, photo_type: sec.photo_type })));
+
     const yr = sec.year_range
       ? `<span class="yr-badge">${sec.year_range[0]}&ndash;${sec.year_range[1]}</span>`
       : "";
     const cardsHtml = sec.cards.length
-      ? sec.cards.map(c => imgCardHtml(d.id, sec.photo_type, c)).join("")
+      ? sec.cards.map((c, ci) => imgCardHtml(d.id, sec.photo_type, c, si, ci)).join("")
       : `<p class="empty-row">No candidates downloaded yet.</p>`;
 
     const div = document.createElement("div");
@@ -280,21 +301,20 @@ function renderImageSections(d) {
   wireImageCards();
 }
 
-function imgCardHtml(subjectId, photoType, c) {
+function imgCardHtml(subjectId, photoType, c, si, ci) {
   const sel   = c.status === "selected";
   const dims  = c.width && c.height ? `${c.width}&times;${c.height}` : "";
   const crop  = c.has_crop ? " &bull; cropped" : "";
-  const src   = c.image_url;
-  const srcLink = c.page_url
-    ? ` &bull; <a class="src-link" href="${escHtml(c.page_url)}" target="_blank" rel="noopener">source</a>`
-    : "";
+  const title = c.title ? `<div class="ic-title">${escHtml(c.title)}</div>` : "";
   return `
     <div class="img-card${sel ? " selected" : ""}"
          data-subject="${subjectId}" data-pt="${photoType}"
          data-id="${c.id}" data-original="${escHtml(c.original_url)}">
-      <img class="ic-thumb" src="${escHtml(src)}" loading="lazy" alt="">
+      <img class="ic-thumb" src="${escHtml(c.image_url)}" loading="lazy" alt=""
+           onclick="openLightbox(${si},${ci})" style="cursor:zoom-in">
       <div class="ic-body">
-        <div class="ic-dims">${dims}${crop}${srcLink}</div>
+        ${title}
+        <div class="ic-dims">${dims}${crop}</div>
         <div class="ic-actions">
           <button class="ic-btn sel-btn${sel ? " sel-active" : ""}">
             ${sel ? "Selected ✓" : "Select"}

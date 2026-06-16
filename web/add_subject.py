@@ -25,24 +25,47 @@ RESEARCH_MODEL = "google/gemini-2.5-flash"
 CONFIG_PATH = Path("config/celebrities.json")
 
 
+def _needs_research(entry: dict) -> bool:
+    """Return True if the cached entry is missing parent birth years for both parents."""
+    parents = entry.get("parents") or {}
+    mother = parents.get("mother") or {}
+    father = parents.get("father") or {}
+    return mother.get("birth_year") is None and father.get("birth_year") is None
+
+
 def ensure_subject_in_config(name: str, log: Callable[[str], None]) -> str:
-    """Return the subject id for `name`, adding it to config/celebrities.json
-    via search-grounded research if it isn't already there."""
+    """Return the subject id for `name`.
+
+    Always re-researches from the web when invoked via the site, so that
+    stale cached entries with missing parent birth years get updated.
+    Falls back to the cached entry only if the LLM client is unavailable.
+    """
     subject_id = slugify(name)
     config = json.loads(CONFIG_PATH.read_text())
     existing = {c["id"]: c for c in config["celebrities"]}
 
-    if subject_id in existing:
-        log(f"'{name}' is already in config/celebrities.json, reusing it.")
-        return subject_id
-
-    log(f"Searching the web for information about '{name}'...")
     client = OpenRouterClient()
     if not client.available:
+        if subject_id in existing:
+            log(f"OPENROUTER_API_KEY not set — reusing cached entry for '{name}'.")
+            return subject_id
         raise RuntimeError("OPENROUTER_API_KEY is not set; cannot research new subjects.")
+
+    cached = existing.get(subject_id)
+    if cached and not _needs_research(cached):
+        log(f"'{name}' already in config with complete parent info, skipping re-research.")
+        return subject_id
+
+    if cached:
+        log(f"'{name}' found in config but parent birth years are missing — re-researching…")
+    else:
+        log(f"Searching the web for information about '{name}'…")
 
     parsed = research_person(client, RESEARCH_MODEL, name)
     if parsed.get("birth_year") is None:
+        if cached:
+            log(f"Re-research found no birth year — keeping cached entry for '{name}'.")
+            return subject_id
         raise RuntimeError(
             f"Could not determine a birth year for '{name}' from web search "
             f"(notes: {parsed.get('notes', '')!r}). Add this subject to "
@@ -62,13 +85,16 @@ def ensure_subject_in_config(name: str, log: Callable[[str], None]) -> str:
     father = (entry["parents"] or {}).get("father") or {}
     log(
         f"Found '{name}': category={entry['category']}, born {entry['birth_year']}; "
-        f"mother={mother.get('name') or 'unknown'}, father={father.get('name') or 'unknown'}"
+        f"mother={mother.get('name') or 'unknown'} "
+        f"(b.{mother.get('birth_year') or '?'}), "
+        f"father={father.get('name') or 'unknown'} "
+        f"(b.{father.get('birth_year') or '?'})"
     )
 
     existing[subject_id] = entry
     config["celebrities"] = list(existing.values())
     CONFIG_PATH.write_text(json.dumps(config, indent=2))
-    log(f"Added '{name}' to config/celebrities.json as '{subject_id}'.")
+    log(f"{'Updated' if cached else 'Added'} '{name}' in config/celebrities.json.")
     return subject_id
 
 
