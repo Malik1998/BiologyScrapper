@@ -18,7 +18,7 @@ from .llm.openrouter_client import OpenRouterClient
 # ddgs's default "duckduckgo" text backend requires a TLS 1.3 client context that
 # some Python/OpenSSL builds reject outright; these backends need no API keys and
 # work reliably across environments.
-TEXT_SEARCH_BACKENDS = "mojeek,yahoo,brave"
+TEXT_SEARCH_BACKENDS = "wikipedia,yahoo,yandex,brave"
 
 
 def web_search_snippets(query: str, max_results: int = 5) -> list[dict]:
