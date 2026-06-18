@@ -279,12 +279,34 @@ async function finishSearch(subjectId) {
     if (!res.ok) throw new Error(res.statusText);
     const data = await res.json();
     renderInfoCard(data);
-    renderImageSections(data);
+    const hasStreamedImages = imageSections.querySelector("[data-pt-section]") !== null;
+    if (!hasStreamedImages) {
+      renderImageSections(data);
+    } else {
+      updateSectionHeaders(data);
+    }
     resultsSection.classList.remove("hidden");
   } catch (e) {
     appendLog("Could not load results: " + e.message, "err");
   } finally {
     resetControls();
+  }
+}
+
+function updateSectionHeaders(d) {
+  for (const sec of d.sections) {
+    const el = imageSections.querySelector(`[data-pt-section="${sec.photo_type}"]`);
+    if (!el) continue;
+    const yr = sec.year_range
+      ? `<span class="yr-badge">${sec.year_range[0]}&ndash;${sec.year_range[1]}</span>`
+      : "";
+    const hdr = el.querySelector(".section-hdr");
+    if (hdr) {
+      hdr.innerHTML = `
+        <span class="section-slug">${sec.photo_type.replace(/_/g, " ")}</span>
+        <span class="section-person">${escHtml(sec.person_label)}</span>
+        ${yr}`;
+    }
   }
 }
 

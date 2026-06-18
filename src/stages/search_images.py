@@ -125,7 +125,7 @@ def _year_points(year_range: tuple[int, int], step: int) -> list[int]:
 
 
 def _build_query(person_label: str, year: int) -> str:
-    return f"{person_label} {year}"
+    return f"{person_label} {year} photo"
 
 
 def _download(raw, subject, photo_type, person_label, year_range, query, out_dir: Path) -> bool:

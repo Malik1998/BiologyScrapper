@@ -22,7 +22,7 @@ class DuckDuckGoBackend(SearchBackend):
 
         results: list[RawResult] = []
         with DDGS() as ddgs:
-            for r in ddgs.images(query, max_results=max_results):
+            for r in ddgs.images(query, max_results=max_results, safesearch="on"):
                 results.append(
                     RawResult(
                         source_url=r.get("image", ""),
