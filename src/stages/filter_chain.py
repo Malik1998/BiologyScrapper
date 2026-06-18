@@ -56,6 +56,21 @@ class FilterChainStage(Stage):
                 n_selected = sum(1 for c in candidates if c.status == "selected")
                 ctx.log(f"[filter_chain] {subject.id}/{photo_type}: {n_selected}/{len(candidates)} selected")
 
+                if ctx.on_images:
+                    cards = [
+                        {
+                            "id": c.id,
+                            "image_url": c.cropped_path or c.local_path,
+                            "title": c.title,
+                            "description": c.description,
+                            "width": c.width,
+                            "height": c.height,
+                            "status": c.status,
+                        }
+                        for c in candidates
+                    ]
+                    ctx.on_images(subject.id, photo_type, cards)
+
         ctx.state.save()
 
 

@@ -66,13 +66,18 @@ def run_stages(ctx: PipelineContext, stage_cfgs: list[dict], stage_names: list[s
 
 
 def run_pipeline_for_subject(
-    subject_id: str, log: Callable[[str], None] = print, force: bool = False, config_path: str = "config/pipeline.yaml"
+    subject_id: str,
+    log: Callable[[str], None] = print,
+    force: bool = False,
+    config_path: str = "config/pipeline.yaml",
+    on_images: Callable[[str, str, list[dict]], None] | None = None,
 ) -> None:
     """Run all enabled pipeline stages restricted to a single subject. Used by the
     web app's "add subject" flow to research + fetch + filter + export on demand."""
     config = load_config(config_path)
     ctx = PipelineContext(
-        subjects=[], limits={"subjects": [subject_id]}, config=config, state=ProgressState(), force=force, log=log
+        subjects=[], limits={"subjects": [subject_id]}, config=config, state=ProgressState(), force=force, log=log,
+        on_images=on_images,
     )
     run_stages(ctx, config.get("stages", []))
 

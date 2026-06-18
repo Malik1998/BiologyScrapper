@@ -98,9 +98,13 @@ def ensure_subject_in_config(name: str, log: Callable[[str], None]) -> str:
     return subject_id
 
 
-def run_add_subject(name: str, log: Callable[[str], None]) -> str:
+def run_add_subject(
+    name: str,
+    log: Callable[[str], None],
+    on_images: Callable[[str, str, list[dict]], None] | None = None,
+) -> str:
     """Research (if new) and run the pipeline for one subject. Returns the
     subject id so the caller can show/redirect to its results page."""
     subject_id = ensure_subject_in_config(name, log)
-    run_pipeline_for_subject(subject_id, log=log)
+    run_pipeline_for_subject(subject_id, log=log, on_images=on_images)
     return subject_id

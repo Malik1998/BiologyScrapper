@@ -89,7 +89,30 @@ class SearchImagesStage(Stage):
                 ctx.state.mark_done(subject.id, photo_type, self.name, downloaded=downloaded)
                 ctx.log(f"[search_images] {subject.id}/{photo_type}: downloaded {downloaded} image(s)")
 
+                if ctx.on_images and downloaded > 0:
+                    cards = _load_cards(out_dir)
+                    ctx.on_images(subject.id, photo_type, cards)
+
         ctx.state.save()
+
+
+def _load_cards(out_dir: Path) -> list[dict]:
+    cards = []
+    for sidecar in sorted(out_dir.glob("*.json")):
+        try:
+            data = json.loads(sidecar.read_text())
+            cards.append({
+                "id": data["id"],
+                "image_url": data.get("cropped_path") or data["local_path"],
+                "title": data.get("title", ""),
+                "description": data.get("description", ""),
+                "width": data.get("width"),
+                "height": data.get("height"),
+                "status": data.get("status", "candidate"),
+            })
+        except Exception:
+            continue
+    return cards
 
 
 def _year_points(year_range: tuple[int, int], step: int) -> list[int]:

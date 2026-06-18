@@ -161,6 +161,8 @@ function startSearch() {
     const data = JSON.parse(e.data);
     if (data.type === "log") {
       appendLog(data.message);
+    } else if (data.type === "images") {
+      renderStreamedImages(data.subject_id, data.photo_type, data.cards);
     } else if (data.type === "done") {
       appendLog(data.subject_id ? `Done — subject id: ${data.subject_id}` : "Done!", "ok");
       es.close();
@@ -221,6 +223,49 @@ function appendLog(msg, forceClass) {
 
 function escHtml(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ── Stream images as they arrive ─────────────────────────────────────────────
+
+function renderStreamedImages(subjectId, photoType, cards) {
+  resultsSection.classList.remove("hidden");
+
+  let section = imageSections.querySelector(`[data-pt-section="${photoType}"]`);
+  if (!section) {
+    section = document.createElement("div");
+    section.className = "img-section";
+    section.dataset.ptSection = photoType;
+    section.innerHTML = `
+      <div class="section-hdr">
+        <span class="section-slug">${photoType.replace(/_/g, " ")}</span>
+      </div>
+      <div class="img-row"></div>`;
+    imageSections.appendChild(section);
+  }
+
+  const row = section.querySelector(".img-row");
+  row.innerHTML = "";
+  const si = [...imageSections.querySelectorAll("[data-pt-section]")].indexOf(section);
+  if (!window.lbSections) window.lbSections = [];
+  window.lbSections[si] = cards.map(c => ({
+    ...c,
+    image_url: "/" + c.image_url,
+    original_url: "/" + c.image_url,
+    subject_id: subjectId,
+    photo_type: photoType,
+  }));
+
+  cards.forEach((c, ci) => {
+    const cardData = {
+      ...c,
+      image_url: "/" + c.image_url,
+      original_url: "/" + c.image_url,
+      has_crop: false,
+    };
+    row.innerHTML += imgCardHtml(subjectId, photoType, cardData, si, ci);
+  });
+
+  wireImageCards();
 }
 
 // ── Render results ────────────────────────────────────────────────────────────

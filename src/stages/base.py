@@ -17,6 +17,7 @@ class PipelineContext:
     force: bool = False
     photo_types: list[str] = field(default_factory=lambda: list(PHOTO_TYPES))
     log: Callable[[str], None] = print
+    on_images: Callable[[str, str, list[dict]], None] | None = None
 
     def iter_subjects(self) -> list[Subject]:
         subj_limit = self.limits.get("subjects")

@@ -80,14 +80,17 @@ def add_subject_stream(name: str):
         raise HTTPException(400, "name is required")
 
     def event_stream():
-        events: "queue.Queue[tuple[str, str]]" = queue.Queue()
+        events: "queue.Queue[tuple[str, ...]]" = queue.Queue()
 
         def log(message: str) -> None:
             events.put(("log", message))
 
+        def on_images(subject_id: str, photo_type: str, cards: list[dict]) -> None:
+            events.put(("images", subject_id, photo_type, cards))
+
         def worker() -> None:
             try:
-                subject_id = add_subject_flow.run_add_subject(name, log)
+                subject_id = add_subject_flow.run_add_subject(name, log, on_images=on_images)
                 events.put(("done", subject_id))
             except Exception as e:
                 events.put(("error", str(e)))
@@ -95,13 +98,16 @@ def add_subject_stream(name: str):
         threading.Thread(target=worker, daemon=True).start()
 
         while True:
-            kind, payload = events.get()
+            ev = events.get()
+            kind = ev[0]
             if kind == "log":
-                event = {"type": "log", "message": payload}
+                event = {"type": "log", "message": ev[1]}
+            elif kind == "images":
+                event = {"type": "images", "subject_id": ev[1], "photo_type": ev[2], "cards": ev[3]}
             elif kind == "done":
-                event = {"type": "done", "subject_id": payload}
+                event = {"type": "done", "subject_id": ev[1]}
             else:
-                event = {"type": "error", "message": payload}
+                event = {"type": "error", "message": ev[1]}
             yield f"data: {json.dumps(event)}\n\n"
             if kind in ("done", "error"):
                 break
