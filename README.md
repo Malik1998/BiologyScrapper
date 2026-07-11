@@ -89,17 +89,37 @@ this failing identically across different models, so it isn't a
 model/provider access issue). In practice this has been observed for
 servers hosted on Russian networks, regardless of which model is requested.
 
-The only fix is routing OpenRouter requests through a proxy with a different
-exit IP. Set `OPENROUTER_PROXY_URL` in `.env` to an HTTP(S) or SOCKS proxy
-reachable from the pipeline's host, e.g.:
+The fix is routing OpenRouter requests through a different exit IP. Two
+options, either works - only `src/llm/openrouter_client.py` is affected, the
+DuckDuckGo/Wikipedia/etc. search backends are unaffected either way:
+
+**Option A - your own relay (`relay/app.py`)**, if you have a second server
+that *can* reach OpenRouter directly. It's a tiny transparent forwarder: it
+never sees or stores an API key of its own, it just passes through whatever
+`Authorization` header the caller sends.
+
+```bash
+# on the non-blocked server:
+pip install fastapi "uvicorn[standard]" requests
+uvicorn relay.app:app --host 0.0.0.0 --port 8787
+
+# in .env on the blocked machine (this repo):
+OPENROUTER_BASE_URL=http://<relay-host>:8787
+```
+`OPENROUTER_API_KEY` still only ever lives in `.env` on the blocked
+machine - the relay just relays it through, request by request. The relay
+has no auth of its own, so put it behind a firewall rule that only allows
+your blocked server's IP - don't leave it open on the public internet.
+
+**Option B - a generic proxy.** Set `OPENROUTER_PROXY_URL` in `.env` to an
+HTTP(S) or SOCKS proxy reachable from the pipeline's host, e.g.:
 ```bash
 OPENROUTER_PROXY_URL=http://user:pass@some-non-blocked-host:8080
 # or, for a SOCKS5 proxy (e.g. `ssh -D 1080 user@non-blocked-host`):
 OPENROUTER_PROXY_URL=socks5h://127.0.0.1:1080
 ```
 SOCKS proxies need `pip install "requests[socks]"` in addition to the base
-requirements. This only affects `src/llm/openrouter_client.py` - the
-DuckDuckGo/Wikipedia/etc. search backends are unaffected.
+requirements.
 
 ## Directory layout
 

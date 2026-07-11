@@ -15,8 +15,6 @@ import requests
 
 from .telemetry import LangfuseTracer
 
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-
 logger = logging.getLogger(__name__)
 
 
@@ -27,10 +25,15 @@ class OpenRouterClient:
         # OpenRouter's edge (Cloudflare) blocks some source networks outright
         # (e.g. "Access denied by security policy" for RU-hosted servers,
         # regardless of model) before the request ever reaches OpenRouter's
-        # own app - a proxy with a different exit IP is the only fix. See
-        # README > "LLM telemetry" for context.
+        # own app. Two independent workarounds, either or both can be set -
+        # see README > "LLM telemetry":
+        # - OPENROUTER_PROXY_URL: route through a generic HTTP(S)/SOCKS proxy.
+        # - OPENROUTER_BASE_URL: point at a relay service (relay/app.py) run
+        #   on a non-blocked server instead of openrouter.ai directly.
         proxy_url = os.environ.get("OPENROUTER_PROXY_URL")
         self.proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+        base_url = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai").rstrip("/")
+        self.api_url = f"{base_url}/api/v1/chat/completions"
 
     @property
     def available(self) -> bool:
@@ -42,14 +45,15 @@ class OpenRouterClient:
 
         prompt_chars = sum(len(_content_text(m.get("content"))) for m in messages)
         started = time.monotonic()
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
         with self.tracer.generation(model=model, messages=messages, kwargs=kwargs) as span:
             try:
                 resp = requests.post(
-                    OPENROUTER_API_URL,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
+                    self.api_url,
+                    headers=headers,
                     json={"model": model, "messages": messages, **kwargs},
                     timeout=60,
                     proxies=self.proxies,
