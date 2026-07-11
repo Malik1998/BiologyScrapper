@@ -80,18 +80,22 @@ class SearchImagesStage(Stage):
                         ctx.log(f"[search_images]   search failed: {e}")
                         continue
 
+                    downloaded_this_query = 0
                     for raw in results:
                         if images_limit and downloaded >= images_limit:
                             break
                         if _download(raw, subject, photo_type, person_label, year_range, query, out_dir):
                             downloaded += 1
+                            downloaded_this_query += 1
+
+                    # Push images to the caller as soon as each query's batch lands, rather
+                    # than waiting for every year's query to finish downloading - a slow or
+                    # blocked source shouldn't hold up photos that already downloaded fine.
+                    if ctx.on_images and downloaded_this_query > 0:
+                        ctx.on_images(subject.id, photo_type, _load_cards(out_dir))
 
                 ctx.state.mark_done(subject.id, photo_type, self.name, downloaded=downloaded)
                 ctx.log(f"[search_images] {subject.id}/{photo_type}: downloaded {downloaded} image(s)")
-
-                if ctx.on_images and downloaded > 0:
-                    cards = _load_cards(out_dir)
-                    ctx.on_images(subject.id, photo_type, cards)
 
         ctx.state.save()
 

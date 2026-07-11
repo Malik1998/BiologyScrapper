@@ -20,17 +20,39 @@
   </div>
 
   <pre id="log"></pre>
+  <div id="images"></div>
   <div id="result"></div>
 
   <script>
     const startBtn = document.getElementById("start-btn");
     const nameInput = document.getElementById("name-input");
     const log = document.getElementById("log");
+    const images = document.getElementById("images");
     const result = document.getElementById("result");
 
     function appendLog(line) {
       log.textContent += line + "\n";
       log.scrollTop = log.scrollHeight;
+    }
+
+    function escHtml(s) {
+      return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function renderImages(subjectId, photoType, cards) {
+      const sectionId = `imgsec-${subjectId}-${photoType}`;
+      let section = document.getElementById(sectionId);
+      if (!section) {
+        section = document.createElement("div");
+        section.id = sectionId;
+        section.innerHTML = `<h3>${escHtml(photoType)}</h3><div class="cards"></div>`;
+        images.appendChild(section);
+      }
+      const cardsEl = section.querySelector(".cards");
+      cardsEl.innerHTML = cards.map(c => `
+        <div class="card ${c.status === 'selected' ? 'selected' : ''}">
+          <img class="thumb" src="/${c.image_url}" loading="lazy">
+        </div>`).join("");
     }
 
     startBtn.addEventListener("click", () => {
@@ -39,6 +61,7 @@
 
       startBtn.disabled = true;
       log.textContent = "";
+      images.innerHTML = "";
       result.innerHTML = "";
       appendLog(`Starting pipeline for "${name}"...`);
 
@@ -47,6 +70,8 @@
         const data = JSON.parse(e.data);
         if (data.type === "log") {
           appendLog(data.message);
+        } else if (data.type === "images") {
+          renderImages(data.subject_id, data.photo_type, data.cards);
         } else if (data.type === "done") {
           appendLog("\nDone!");
           result.innerHTML = `<a href="/subject/${data.subject_id}"><button>View ${data.subject_id}</button></a>`;

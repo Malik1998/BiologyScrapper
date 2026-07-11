@@ -32,7 +32,7 @@ class OpenRouterClient:
         #   on a non-blocked server instead of openrouter.ai directly.
         proxy_url = os.environ.get("OPENROUTER_PROXY_URL")
         self.proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
-        base_url = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai").rstrip("/")
+        base_url = (os.environ.get("OPENROUTER_BASE_URL") or "https://openrouter.ai").rstrip("/")
         self.api_url = f"{base_url}/api/v1/chat/completions"
 
     @property
