@@ -48,13 +48,15 @@ class OpenRouterClient:
                 )
                 resp.raise_for_status()
                 data = resp.json()
-            except Exception:
+            except Exception as e:
                 elapsed_ms = (time.monotonic() - started) * 1000
+                body = getattr(getattr(e, "response", None), "text", "")
                 logger.error(
-                    "openrouter chat failed model=%s prompt_chars=%d elapsed_ms=%.0f",
+                    "openrouter chat failed model=%s prompt_chars=%d elapsed_ms=%.0f body=%s",
                     model,
                     prompt_chars,
                     elapsed_ms,
+                    body[:2000],
                     exc_info=True,
                 )
                 span.error()

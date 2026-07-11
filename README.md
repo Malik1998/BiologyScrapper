@@ -61,16 +61,23 @@ silently disabled and the pipeline behaves exactly as before - this is the
 same opt-in pattern as `OPENROUTER_API_KEY`. Image bytes are never sent to
 Langfuse (redacted to `<elided>` in the trace input) to keep traces small.
 
-**Known issue (as of mid-2026):** `docker compose up` in the Langfuse repo may
-fail with `pull access denied for cgr.dev/chainguard/minio` - their default
-minio image is currently ungated for anonymous pulls upstream
-([langfuse#11090](https://github.com/langfuse/langfuse/issues/11090),
-[langfuse#10488](https://github.com/langfuse/langfuse/issues/10488)). First
-try `git pull` in the Langfuse checkout in case it's since been patched; if
-not, edit `docker-compose.yml` in that checkout and change the `minio`
-service's `image:` line to a pinned Docker Hub tag, e.g.
-`minio/minio:RELEASE.2024-11-07T00-52-20Z`, keeping its `command`/`environment`/
-`volumes` as-is.
+**Known self-host issues (as of mid-2026)**, both in the Langfuse checkout's
+`docker-compose.yml`, not in this repo. Try `git pull` in that checkout first
+in case they've since been patched upstream.
+
+- `pull access denied for cgr.dev/chainguard/minio` - their default minio
+  image is currently ungated for anonymous pulls
+  ([langfuse#11090](https://github.com/langfuse/langfuse/issues/11090),
+  [langfuse#10488](https://github.com/langfuse/langfuse/issues/10488)). Fix:
+  change the `minio` service's `image:` line to a pinned Docker Hub tag, e.g.
+  `minio/minio:RELEASE.2024-11-07T00-52-20Z`, keeping its
+  `command`/`environment`/`volumes` as-is.
+- `failed to bind host port for 127.0.0.1:6379 ... address already in use` -
+  something else on the machine already has Redis's default port. Check with
+  `sudo lsof -i :6379`, then remap the `redis` service's `ports:` entry to a
+  free host port, e.g. `"127.0.0.1:6380:6379"` (only the host side, left of
+  the colon, needs to change - Langfuse's own containers talk to Redis over
+  the internal Docker network by service name, not the published port).
 
 ## Directory layout
 
