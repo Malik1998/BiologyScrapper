@@ -16,7 +16,7 @@
     <div class="cards">
       {% for card in section.cards %}
         {% set c = card.candidate %}
-        <div class="card {{ 'selected' if c.status == 'selected' else '' }}"
+        <div class="card {{ 'selected' if c.status == 'selected' else '' }} {{ 'has-meta' if c.meta else '' }}"
              data-subject="{{ subject.id }}"
              data-photo-type="{{ section.photo_type }}"
              data-id="{{ c.id }}"
@@ -30,6 +30,7 @@
             <button class="select-btn">{{ 'Selected ✓' if c.status == 'selected' else 'Select' }}</button>
             <button class="crop-btn">Crop</button>
             {% if c.cropped_path %}<button class="uncrop-btn">Reset crop</button>{% endif %}
+            <button class="meta-btn">{{ 'Meta ✓' if c.meta else 'Meta' }}</button>
           </div>
         </div>
       {% endfor %}
@@ -49,7 +50,27 @@
     </div>
   </div>
 
+  <!-- Meta modal -->
+  <div id="meta-modal" class="modal hidden">
+    <div class="modal-content meta-modal-content">
+      <div class="meta-modal-header">
+        <h3>Image metadata</h3>
+        <div class="meta-mode-toggle">
+          <button class="meta-mode-btn active" data-mode="form" type="button">Form</button>
+          <button class="meta-mode-btn" data-mode="json" type="button">JSON</button>
+        </div>
+      </div>
+      <div id="meta-form" class="meta-form"></div>
+      <textarea id="meta-json" class="meta-json hidden"></textarea>
+      <div class="modal-actions">
+        <button id="meta-save">Save</button>
+        <button id="meta-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+  <script src="/static/gallery.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

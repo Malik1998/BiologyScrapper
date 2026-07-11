@@ -208,6 +208,7 @@ def subject_data_api(subject_id: str):
                 "title": c.title,
                 "description": c.description,
                 "query": c.query,
+                "has_meta": bool(c.meta),
             }
             for c in candidates
         ]
@@ -322,6 +323,43 @@ def api_uncrop(req: SelectRequest):  # only subject_id/photo_type/candidate_id a
     candidate.crop_box = None
     da.save_candidate(candidate)
     return {"image_url": da.to_url(candidate.local_path)}
+
+
+@app.get("/api/meta_schema")
+def api_meta_schema():
+    return {"fields": da.load_meta_schema()}
+
+
+@app.get("/api/meta/{subject_id}/{photo_type}/{candidate_id}")
+def api_meta_get(subject_id: str, photo_type: str, candidate_id: str):
+    subject = da.get_subject(subject_id)
+    if subject is None:
+        raise HTTPException(404, f"Unknown subject: {subject_id}")
+    try:
+        candidate = da.load_candidate(subject_id, photo_type, candidate_id)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    return {
+        "fields": da.load_meta_schema(),
+        "saved": candidate.meta,
+        "suggested": da.compute_meta_suggestions(subject, photo_type, candidate),
+    }
+
+
+class MetaRequest(BaseModel):
+    subject_id: str
+    photo_type: str
+    candidate_id: str
+    meta: dict
+
+
+@app.post("/api/meta")
+def api_meta_save(req: MetaRequest):
+    try:
+        candidate = da.save_candidate_meta(req.subject_id, req.photo_type, req.candidate_id, req.meta)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    return {"status": "ok", "meta": candidate.meta}
 
 
 @app.get("/api/export/zip")

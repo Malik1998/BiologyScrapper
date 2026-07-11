@@ -140,6 +140,7 @@ class ImageCandidate:
     status: str = "candidate"  # candidate | filtered_out | selected
     crop_box: Optional[dict[str, float]] = None  # {left, top, right, bottom} in source pixel coords
     cropped_path: Optional[str] = None  # set once a crop has been saved via the review app
+    meta: dict[str, Any] = field(default_factory=dict)  # manually-confirmed per-image labels, see config/image_meta_schema.json
 
     def to_dict(self) -> dict:
         d = asdict(self)

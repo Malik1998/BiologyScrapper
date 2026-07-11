@@ -1,0 +1,54 @@
+{
+  "//": "Per-image metadata fields shown in the review app's 'Meta' modal. Add new fields here without touching code - each becomes a form control automatically. 'source' fields get an auto-suggested default computed from the subject/photo_type/target_year_range context (never guessed for visual attributes like smiling/beard/etc - those default to 'unknown' and must be set by hand).",
+  "fields": [
+    {
+      "key": "year",
+      "label": "Real year photo was taken",
+      "type": "number",
+      "source": "estimated_year"
+    },
+    {
+      "key": "role",
+      "label": "Who is in the photo",
+      "type": "enum",
+      "options": ["self", "self_with_parents", "mother", "father", "other"],
+      "source": "role_from_photo_type"
+    },
+    {
+      "key": "age",
+      "label": "Age in the photo",
+      "type": "number",
+      "source": "estimated_age"
+    },
+    {
+      "key": "smiling",
+      "label": "Smiling",
+      "type": "bool"
+    },
+    {
+      "key": "beard",
+      "label": "Beard",
+      "type": "bool"
+    },
+    {
+      "key": "glasses",
+      "label": "Glasses",
+      "type": "bool"
+    },
+    {
+      "key": "head_tilt_normal",
+      "label": "Head tilt normal (not tilted)",
+      "type": "bool"
+    },
+    {
+      "key": "fillers",
+      "label": "Visible fillers",
+      "type": "bool"
+    },
+    {
+      "key": "notes",
+      "label": "Notes",
+      "type": "text"
+    }
+  ]
+}

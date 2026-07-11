@@ -396,6 +396,28 @@
         "father": null
       },
       "notes": "LLM research failed (404 Client Error: Not Found for url: https://openrouter.ai/api/v1/chat/completions/api/v1/chat/completions); birth year 1956 guessed from search snippets."
+    },
+    {
+      "id": "angelina_jolie",
+      "name": "Angelina Jolie",
+      "category": "actor",
+      "birth_year": 1975,
+      "death_year": null,
+      "parents": {
+        "mother": {
+          "name": "Marcheline Bertrand",
+          "birth_year": 1950,
+          "death_year": 2007,
+          "confidence": "high"
+        },
+        "father": {
+          "name": "Jon Voight",
+          "birth_year": null,
+          "death_year": null,
+          "confidence": "unknown"
+        }
+      },
+      "notes": "Search results directly confirm Angelina Jolie's birth year (1975) and her mother Marcheline Bertrand's birth (1950) and death (2007) years. While Jon Voight is identified as the father, the provided snippets do not explicitly state his exact birth year, only his age at a specific date, so it is marked as unknown per instructions."
     }
   ]
 }

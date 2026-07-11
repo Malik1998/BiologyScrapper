@@ -105,6 +105,25 @@
   </div>
 </div>
 
+<!-- Meta modal -->
+<div id="meta-modal" class="modal hidden">
+  <div class="modal-content meta-modal-content">
+    <div class="meta-modal-header">
+      <h3>Image metadata</h3>
+      <div class="meta-mode-toggle">
+        <button class="meta-mode-btn active" data-mode="form" type="button">Form</button>
+        <button class="meta-mode-btn" data-mode="json" type="button">JSON</button>
+      </div>
+    </div>
+    <div id="meta-form" class="meta-form"></div>
+    <textarea id="meta-json" class="meta-json hidden"></textarea>
+    <div class="modal-actions">
+      <button id="meta-save">Save</button>
+      <button id="meta-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script src="/static/gallery.js"></script>
 <script>
@@ -337,11 +356,12 @@ function renderImageSections(d) {
 
 function imgCardHtml(subjectId, photoType, c, si, ci) {
   const sel   = c.status === "selected";
+  const hasMeta = !!c.has_meta;
   const dims  = c.width && c.height ? `${c.width}&times;${c.height}` : "";
   const crop  = c.has_crop ? " &bull; cropped" : "";
   const title = c.title ? `<div class="ic-title">${escHtml(c.title)}</div>` : "";
   return `
-    <div class="img-card${sel ? " selected" : ""}"
+    <div class="img-card${sel ? " selected" : ""}${hasMeta ? " has-meta" : ""}"
          data-subject="${subjectId}" data-pt="${photoType}"
          data-id="${c.id}" data-original="${escHtml(c.original_url)}">
       <img class="ic-thumb" src="${escHtml(c.image_url)}" loading="lazy" alt=""
@@ -354,6 +374,7 @@ function imgCardHtml(subjectId, photoType, c, si, ci) {
             ${sel ? "Selected&thinsp;✓" : "Select"}
           </button>
           <button class="ic-btn crop-btn-inline">Crop</button>
+          <button class="ic-btn meta-btn">Meta${hasMeta ? " ✓" : ""}</button>
         </div>
       </div>
     </div>`;
