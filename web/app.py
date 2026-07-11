@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import io
 import json
+import logging
+import os
 import queue
 import threading
 import zipfile
@@ -18,6 +20,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse

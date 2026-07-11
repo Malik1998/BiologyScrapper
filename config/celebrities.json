@@ -362,6 +362,28 @@
         }
       },
       "notes": "Both parents extremely well documented at all ages; abundant high-quality photo archives."
+    },
+    {
+      "id": "",
+      "name": "\u0440\u0438\u0437 \u0443\u0438\u0437\u0435\u0440\u0441\u043f\u0443\u043d",
+      "category": "actor",
+      "birth_year": 1976,
+      "death_year": null,
+      "parents": {
+        "mother": {
+          "name": "Mary Elizabeth \"Betty\" Witherspoon",
+          "birth_year": null,
+          "death_year": null,
+          "confidence": "unknown"
+        },
+        "father": {
+          "name": "John Draper Witherspoon Sr.",
+          "birth_year": null,
+          "death_year": null,
+          "confidence": "unknown"
+        }
+      },
+      "notes": "The birth years of her parents are not mentioned in the provided search results."
     }
   ]
 }

@@ -11,6 +11,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
+import os
 from pathlib import Path
 from typing import Callable
 
@@ -90,6 +92,7 @@ def run(args: argparse.Namespace) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     load_dotenv()
+    logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 
     parser = argparse.ArgumentParser(description="Aging-dataset scraper/labeler pipeline")
     subparsers = parser.add_subparsers(dest="command", required=True)

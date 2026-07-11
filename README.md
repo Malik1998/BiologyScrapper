@@ -30,6 +30,37 @@ cp .env.example .env   # then fill in OPENROUTER_API_KEY (optional but recommend
 Without it, the pipeline still runs end-to-end using the free DuckDuckGo
 search backend and the heuristic filter only.
 
+## LLM telemetry
+
+Every OpenRouter call (`src/llm/openrouter_client.py`) already logs to the
+standard `logging` module: model, prompt size, latency, and token usage on
+success; full traceback on failure. Control verbosity with `LOG_LEVEL` in
+`.env` (`DEBUG`/`INFO`/`WARNING`, default `INFO`).
+
+For a richer view (searchable traces, cost per subject, prompt diffing) you
+can additionally point the pipeline at a self-hosted
+[Langfuse](https://langfuse.com/) instance - MIT-licensed, no usage limits
+when self-hosted:
+
+```bash
+# 1. run Langfuse locally (separate from this repo)
+git clone https://github.com/langfuse/langfuse
+cd langfuse && docker compose up -d   # -> http://localhost:3000
+
+# 2. in the Langfuse UI: create an org/project, copy the public/secret keys
+
+# 3. back in this repo's .env
+pip install langfuse   # optional - only needed for tracing
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=http://localhost:3000
+```
+
+If `langfuse` isn't installed, or the two keys aren't set, tracing is
+silently disabled and the pipeline behaves exactly as before - this is the
+same opt-in pattern as `OPENROUTER_API_KEY`. Image bytes are never sent to
+Langfuse (redacted to `<elided>` in the trace input) to keep traces small.
+
 ## Directory layout
 
 ```
@@ -91,6 +122,74 @@ Stages (defined in `config/pipeline.yaml`, run in order):
 Everything is config-driven and pluggable: new search backends, filters, or
 stages just need a `@register(...)` decorator (see `src/registry.py`) and an
 entry in `pipeline.yaml`.
+
+## How image selection works (algorithm details)
+
+For each `(subject, photo_type)` slot, three phases run in sequence:
+
+**1. Query building** (`src/models.py:Subject.year_range`, `src/stages/search_images.py`)
+- The target year window is derived from birth/death years: e.g. `self_50_60`
+  = birth_year+50 .. birth_year+60, clamped to the current year and (if
+  applicable) death year. For parents with an unknown birth year, it's
+  estimated as `subject.birth_year - 27`.
+- The window is split into points every `year_step` years (default 3), and
+  one query is built per point: `"{person_label} {year} photo"` (e.g.
+  `"Meryl Streep 1975 photo"`).
+- Each query is run through the configured search backend
+  (`duckduckgo` by default - see `src/search_backends/`) requesting up to
+  `max_results_per_query` results; each result is downloaded, deduped by
+  content hash, and saved to `data/raw/<subject_id>/<photo_type>/` with a
+  `.json` sidecar (title/description/page_url/query). No filtering or
+  scoring happens in this phase - it's pure discovery.
+
+**2. Filter chain** (`config/pipeline.yaml:filter_chain.chain`,
+`src/stages/filter_chain.py`) - an ordered pipeline; each filter only sees
+candidates the previous filter didn't already reject:
+- `heuristic` (`src/filters/heuristic.py`, always on, no LLM) - rejects images
+  below `min_width`/`min_height` (400x400 default) or with an aspect ratio
+  above `max_aspect_ratio` (2.5).
+- `llm_align` (`src/filters/llm_align.py`, **disabled by default**) - a
+  **text-only LLM call**. Sends only the metadata (title/description/page
+  URL, *not* the pixels) to an OpenRouter model (`google/gemini-2.5-flash` by
+  default) and asks "how likely is this really that person around that
+  year?", returning `{"relevance": 0-1}`. Cheap pre-filter before spending a
+  vision call.
+- `vlm_verify` (`src/filters/vlm_verify.py`, **disabled by default**) - a
+  **vision LLM call**. Sends the actual downloaded image (base64) to an
+  OpenRouter vision model and asks it to judge identity match, estimated
+  age/year, whether a single face is clearly visible, and image quality,
+  returning `{"verdict": 0-1, ...}`. This is the step that actually looks at
+  pixels to confirm "is this the right person at the right age".
+- Both LLM filters need `OPENROUTER_API_KEY`; without it they no-op (scores
+  marked `"skipped"`, candidates pass through unscored). All OpenRouter calls
+  go through `src/llm/openrouter_client.py` (`chat_text` / `chat_vision`),
+  hitting `https://openrouter.ai/api/v1/chat/completions`.
+
+**3. Ranking & selection** (`_score` / `_rank_and_select` in
+`src/stages/filter_chain.py`)
+- Score = average of `llm_align.relevance` and `vlm_verify.verdict` (whichever
+  ran); `0.5` (neutral) if neither ran; a `heuristic`-rejected image is never
+  selected regardless of score.
+- Candidates are sorted by score descending, and the top `top_k` (default 4)
+  are marked `status="selected"`; the rest stay `candidate` (still visible and
+  manually pickable in the review app) unless `heuristic` marked them
+  `filtered_out`. `export_local` then copies only `selected` images to
+  `data/selected/`.
+
+**In short:** out of the box (no `OPENROUTER_API_KEY`, default
+`pipeline.yaml`), there's no relevance/identity signal at all - selection is
+just "first `top_k` downloaded images per slot that pass the resolution/aspect
+checks". Enabling `llm_align` and/or `vlm_verify` in `pipeline.yaml` (and
+setting `OPENROUTER_API_KEY`) is what makes selection identity- and
+age-aware.
+
+A separate, unrelated use of the LLM is **identity research**
+(`src/research.py`): given a person's name, it runs a few plain-text web
+searches (DuckDuckGo) and asks the LLM to extract birth year / parents'
+names *only from those search snippets* (grounded, not memory-based). This
+powers `research_unknown_parents` in `load_subjects` and
+`scripts/build_celebrities_config.py` / the web app's "Add new subject" flow
+- it fills in *who to search for*, not which downloaded photo to pick.
 
 ## Review / labeling web app
 
