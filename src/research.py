@@ -10,9 +10,17 @@ facts *only* from those search results.
 from __future__ import annotations
 
 import json
+import re
 
 from .json_util import extract_json
 from .llm.openrouter_client import OpenRouterClient
+
+# Fallback when the LLM extraction step fails outright (rate limit, network
+# block, etc.) but the web search itself succeeded: search snippets often
+# already contain the birth year in plain text ("born June 4, 1975", "(1975-)"),
+# so a birth year alone is enough to let search_images run instead of losing
+# the search results entirely.
+_BIRTH_YEAR_RE = re.compile(r"\bborn\b[^.\n]{0,40}?\b(1[89]\d{2}|20[0-4]\d)\b", re.IGNORECASE)
 
 
 # ddgs's default "duckduckgo" text backend requires a TLS 1.3 client context that
@@ -49,6 +57,11 @@ def _format_snippets(snippets: list[dict]) -> str:
         f"[{i}] {s.get('title', '')}\n{s.get('body', '')}\nSource: {s.get('href', '')}"
         for i, s in enumerate(snippets, 1)
     )
+
+
+def _guess_birth_year(snippets: list[dict]) -> int | None:
+    match = _BIRTH_YEAR_RE.search(_format_snippets(snippets))
+    return int(match.group(1)) if match else None
 
 
 PERSON_PROMPT = """\
@@ -113,11 +126,29 @@ PERSON_SCHEMA = {
 
 def research_person(client: OpenRouterClient, model: str, name: str) -> dict:
     """Search the web for `name` and ask the LLM to extract a structured profile
-    (category, birth/death years, parents) grounded in those results."""
+    (category, birth/death years, parents) grounded in those results.
+
+    If the LLM step itself fails (rate limit, network block, bad response),
+    falls back to a plain regex birth-year guess from the search snippets
+    already gathered, so search_images can still run instead of losing the
+    whole subject."""
     snippets = _gather_snippets([f"{name} biography born", f"{name} parents mother father"])
     prompt = PERSON_PROMPT.format(name=name, context=_format_snippets(snippets))
-    raw = client.chat_text(model, prompt, response_schema=PERSON_SCHEMA, response_schema_name="person")
-    return json.loads(extract_json(raw))
+    try:
+        raw = client.chat_text(model, prompt, response_schema=PERSON_SCHEMA, response_schema_name="person")
+        return json.loads(extract_json(raw))
+    except Exception as e:
+        birth_year = _guess_birth_year(snippets)
+        return {
+            "category": "other",
+            "birth_year": birth_year,
+            "death_year": None,
+            "parents": {"mother": None, "father": None},
+            "notes": (
+                f"LLM research failed ({e}); "
+                + (f"birth year {birth_year} guessed from search snippets." if birth_year else "birth year unknown.")
+            ),
+        }
 
 
 PARENT_PROMPT = """\

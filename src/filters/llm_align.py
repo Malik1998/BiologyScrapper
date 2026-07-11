@@ -30,7 +30,7 @@ class LLMAlignFilter(Filter):
     def __init__(self, **params):
         super().__init__(**params)
         self.client = OpenRouterClient()
-        self.model = self.params.get("model", "google/gemini-2.5-flash")
+        self.model = self.params.get("model", "qwen/qwen3.6-flash")
 
     def apply(self, candidates: list[ImageCandidate], ctx: FilterContext) -> list[ImageCandidate]:
         if not self.client.available:

@@ -24,6 +24,13 @@ class OpenRouterClient:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")
         self.tracer = LangfuseTracer()
+        # OpenRouter's edge (Cloudflare) blocks some source networks outright
+        # (e.g. "Access denied by security policy" for RU-hosted servers,
+        # regardless of model) before the request ever reaches OpenRouter's
+        # own app - a proxy with a different exit IP is the only fix. See
+        # README > "LLM telemetry" for context.
+        proxy_url = os.environ.get("OPENROUTER_PROXY_URL")
+        self.proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
 
     @property
     def available(self) -> bool:
@@ -45,6 +52,7 @@ class OpenRouterClient:
                     },
                     json={"model": model, "messages": messages, **kwargs},
                     timeout=60,
+                    proxies=self.proxies,
                 )
                 resp.raise_for_status()
                 data = resp.json()

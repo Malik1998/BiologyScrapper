@@ -21,7 +21,7 @@ from src.pipeline import run_pipeline_for_subject
 from src.research import research_person
 from src.text_util import slugify
 
-RESEARCH_MODEL = "google/gemini-2.5-flash"
+RESEARCH_MODEL = "qwen/qwen3.6-flash"
 CONFIG_PATH = Path("config/celebrities.json")
 
 

@@ -79,6 +79,28 @@ in case they've since been patched upstream.
   the colon, needs to change - Langfuse's own containers talk to Redis over
   the internal Docker network by service name, not the published port).
 
+### OpenRouter blocked with "Access denied by security policy"
+
+If every OpenRouter call fails with a `403` and body
+`{"success": false, "error": "Access denied by security policy."}`, check the
+response headers for `server: cloudflare` - that means the request is being
+rejected at OpenRouter's edge/WAF before it reaches their app (confirmed by
+this failing identically across different models, so it isn't a
+model/provider access issue). In practice this has been observed for
+servers hosted on Russian networks, regardless of which model is requested.
+
+The only fix is routing OpenRouter requests through a proxy with a different
+exit IP. Set `OPENROUTER_PROXY_URL` in `.env` to an HTTP(S) or SOCKS proxy
+reachable from the pipeline's host, e.g.:
+```bash
+OPENROUTER_PROXY_URL=http://user:pass@some-non-blocked-host:8080
+# or, for a SOCKS5 proxy (e.g. `ssh -D 1080 user@non-blocked-host`):
+OPENROUTER_PROXY_URL=socks5h://127.0.0.1:1080
+```
+SOCKS proxies need `pip install "requests[socks]"` in addition to the base
+requirements. This only affects `src/llm/openrouter_client.py` - the
+DuckDuckGo/Wikipedia/etc. search backends are unaffected.
+
 ## Directory layout
 
 ```

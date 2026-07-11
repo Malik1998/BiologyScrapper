@@ -16,7 +16,7 @@ stages:
       # If true (and OPENROUTER_API_KEY is set), an LLM fills in low-confidence/unknown
       # parent names before search queries are built.
       research_unknown_parents: false
-      research_model: "google/gemini-2.5-flash"
+      research_model: "qwen/qwen3.6-flash"
 
   - name: search_images
     enabled: true
@@ -40,11 +40,11 @@ stages:
         - type: llm_align
           enabled: false   # text-only relevance check, needs OPENROUTER_API_KEY
           params:
-            model: "google/gemini-2.5-flash"
+            model: "qwen/qwen3.6-flash"
         - type: vlm_verify
           enabled: false   # vision identity/age/quality check, needs OPENROUTER_API_KEY
           params:
-            model: "google/gemini-2.5-flash"
+            model: "qwen/qwen3.6-flash"
       top_k: 4
 
   - name: export_local
