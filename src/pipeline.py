@@ -93,6 +93,8 @@ def run(args: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> None:
     load_dotenv()
     logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+    for noisy in ("primp", "urllib3", "httpx", "httpcore"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(description="Aging-dataset scraper/labeler pipeline")
     subparsers = parser.add_subparsers(dest="command", required=True)

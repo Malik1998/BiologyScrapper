@@ -21,6 +21,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+for _noisy in ("primp", "urllib3", "httpx", "httpcore"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse

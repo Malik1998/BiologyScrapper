@@ -77,16 +77,33 @@ class OpenRouterClient:
 
         return data
 
-    def chat_text(self, model: str, prompt: str, system: Optional[str] = None, **kwargs) -> str:
+    def chat_text(
+        self,
+        model: str,
+        prompt: str,
+        system: Optional[str] = None,
+        response_schema: Optional[dict] = None,
+        response_schema_name: str = "response",
+        **kwargs,
+    ) -> str:
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
+        if response_schema is not None:
+            kwargs["response_format"] = _response_format(response_schema, response_schema_name)
         result = self.chat(model, messages, **kwargs)
         return result["choices"][0]["message"]["content"]
 
     def chat_vision(
-        self, model: str, prompt: str, image_path: str, system: Optional[str] = None, **kwargs
+        self,
+        model: str,
+        prompt: str,
+        image_path: str,
+        system: Optional[str] = None,
+        response_schema: Optional[dict] = None,
+        response_schema_name: str = "response",
+        **kwargs,
     ) -> str:
         mime, _ = mimetypes.guess_type(image_path)
         mime = mime or "image/jpeg"
@@ -105,8 +122,17 @@ class OpenRouterClient:
                 ],
             }
         )
+        if response_schema is not None:
+            kwargs["response_format"] = _response_format(response_schema, response_schema_name)
         result = self.chat(model, messages, **kwargs)
         return result["choices"][0]["message"]["content"]
+
+
+def _response_format(schema: dict, name: str) -> dict:
+    return {
+        "type": "json_schema",
+        "json_schema": {"name": name, "strict": True, "schema": schema},
+    }
 
 
 def _content_text(content) -> str:

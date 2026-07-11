@@ -80,12 +80,43 @@ null and "confidence": "unknown".
 """
 
 
+PARENT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "name": {"type": ["string", "null"]},
+        "birth_year": {"type": ["integer", "null"]},
+        "death_year": {"type": ["integer", "null"]},
+        "confidence": {"type": "string", "enum": ["high", "medium", "low", "unknown"]},
+    },
+    "required": ["name", "birth_year", "death_year", "confidence"],
+    "additionalProperties": False,
+}
+
+PERSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "category": {"type": "string", "enum": ["actor", "athlete", "politician", "royal", "other"]},
+        "birth_year": {"type": ["integer", "null"]},
+        "death_year": {"type": ["integer", "null"]},
+        "parents": {
+            "type": "object",
+            "properties": {"mother": PARENT_SCHEMA, "father": PARENT_SCHEMA},
+            "required": ["mother", "father"],
+            "additionalProperties": False,
+        },
+        "notes": {"type": "string"},
+    },
+    "required": ["category", "birth_year", "death_year", "parents", "notes"],
+    "additionalProperties": False,
+}
+
+
 def research_person(client: OpenRouterClient, model: str, name: str) -> dict:
     """Search the web for `name` and ask the LLM to extract a structured profile
     (category, birth/death years, parents) grounded in those results."""
     snippets = _gather_snippets([f"{name} biography born", f"{name} parents mother father"])
     prompt = PERSON_PROMPT.format(name=name, context=_format_snippets(snippets))
-    raw = client.chat_text(model, prompt)
+    raw = client.chat_text(model, prompt, response_schema=PERSON_SCHEMA, response_schema_name="person")
     return json.loads(extract_json(raw))
 
 
@@ -113,5 +144,5 @@ def research_parent(client: OpenRouterClient, model: str, subject_name: str, rol
     their identity, grounded in those results."""
     snippets = _gather_snippets([f"{subject_name} {role} name", f"{subject_name} parents {role}"])
     prompt = PARENT_PROMPT.format(subject=subject_name, role=role, context=_format_snippets(snippets))
-    raw = client.chat_text(model, prompt)
+    raw = client.chat_text(model, prompt, response_schema=PARENT_SCHEMA, response_schema_name="parent")
     return json.loads(extract_json(raw))

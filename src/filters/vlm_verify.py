@@ -8,6 +8,29 @@ from ..models import ImageCandidate
 from ..registry import register
 from .base import Filter, FilterContext
 
+RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "identity_match": {"type": "string", "enum": ["yes", "no", "unsure"]},
+        "estimated_age_or_year": {"type": "string"},
+        "single_person_visible": {"type": "boolean"},
+        "face_clearly_visible": {"type": "boolean"},
+        "quality_ok": {"type": "boolean"},
+        "verdict": {"type": "number"},
+        "reason": {"type": "string"},
+    },
+    "required": [
+        "identity_match",
+        "estimated_age_or_year",
+        "single_person_visible",
+        "face_clearly_visible",
+        "quality_ok",
+        "verdict",
+        "reason",
+    ],
+    "additionalProperties": False,
+}
+
 
 @register("filter", "vlm_verify")
 class VLMVerifyFilter(Filter):
@@ -46,7 +69,13 @@ class VLMVerifyFilter(Filter):
                 "}"
             )
             try:
-                raw = self.client.chat_vision(self.model, prompt, c.local_path)
+                raw = self.client.chat_vision(
+                    self.model,
+                    prompt,
+                    c.local_path,
+                    response_schema=RESPONSE_SCHEMA,
+                    response_schema_name="vlm_verify",
+                )
                 parsed = json.loads(extract_json(raw))
             except Exception as e:
                 parsed = {"verdict": 0.5, "reason": f"vlm_verify error: {e}"}

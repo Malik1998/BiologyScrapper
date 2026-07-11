@@ -61,7 +61,17 @@ def ensure_subject_in_config(name: str, log: Callable[[str], None]) -> str:
     else:
         log(f"Searching the web for information about '{name}'…")
 
-    parsed = research_person(client, RESEARCH_MODEL, name)
+    try:
+        parsed = research_person(client, RESEARCH_MODEL, name)
+    except Exception as e:
+        if cached:
+            log(f"Re-research failed ({e}) — keeping cached entry for '{name}'.")
+            return subject_id
+        raise RuntimeError(
+            f"Web research for '{name}' failed ({e}). Add this subject to "
+            "config/celebrities.json manually, or retry once OpenRouter is reachable."
+        ) from e
+
     if parsed.get("birth_year") is None:
         if cached:
             log(f"Re-research found no birth year — keeping cached entry for '{name}'.")
