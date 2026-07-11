@@ -388,14 +388,24 @@
     {
       "id": "tom_hanks",
       "name": "Tom Hanks",
-      "category": "other",
+      "category": "actor",
       "birth_year": 1956,
       "death_year": null,
       "parents": {
-        "mother": null,
-        "father": null
+        "mother": {
+          "name": "Janet Marylyn Frager",
+          "birth_year": null,
+          "death_year": null,
+          "confidence": "medium"
+        },
+        "father": {
+          "name": "Amos Mefford Hanks",
+          "birth_year": null,
+          "death_year": null,
+          "confidence": "medium"
+        }
       },
-      "notes": "LLM research failed (404 Client Error: Not Found for url: https://openrouter.ai/api/v1/chat/completions/api/v1/chat/completions); birth year 1956 guessed from search snippets."
+      "notes": "Search results confirm Tom Hanks' birth year (1956) and parents' names, but do not provide birth or death years for either parent. The provided text contains no photographic data or specific ages for the parents, and they were private figures rather than documented public figures with age-specific records in these results."
     },
     {
       "id": "angelina_jolie",
