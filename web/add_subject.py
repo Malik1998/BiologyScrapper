@@ -118,3 +118,34 @@ def run_add_subject(
     subject_id = ensure_subject_in_config(name, log)
     run_pipeline_for_subject(subject_id, log=log, on_images=on_images)
     return subject_id
+
+
+def run_add_subjects(
+    names: list[str],
+    log: Callable[[str], None],
+    on_images: Callable[[str, str, list[dict]], None] | None = None,
+    on_subject_done: Callable[[str, str, str, str | None], None] | None = None,
+) -> list[dict]:
+    """Research and run the pipeline for a batch of subjects, one at a time.
+
+    A failure on one name is logged and skipped rather than aborting the rest
+    of the batch. `on_subject_done(name, subject_id, status, error)` fires
+    after each name, with status "ok" or "error" (subject_id is "" on error).
+    Returns a list of {"name", "subject_id", "status", "error"} results.
+    """
+    results = []
+    total = len(names)
+    for i, name in enumerate(names, start=1):
+        log(f"[{i}/{total}] Starting \"{name}\"…")
+        try:
+            subject_id = run_add_subject(name, log, on_images=on_images)
+            results.append({"name": name, "subject_id": subject_id, "status": "ok", "error": None})
+            log(f"[{i}/{total}] Done \"{name}\" -> {subject_id}")
+            if on_subject_done:
+                on_subject_done(name, subject_id, "ok", None)
+        except Exception as e:
+            log(f"[{i}/{total}] FAILED \"{name}\": {e}")
+            results.append({"name": name, "subject_id": "", "status": "error", "error": str(e)})
+            if on_subject_done:
+                on_subject_done(name, "", "error", str(e))
+    return results

@@ -78,6 +78,11 @@ def add_page(request: Request):
     return templates.TemplateResponse(request, "add.html")
 
 
+@app.get("/add_bulk")
+def add_bulk_page(request: Request):
+    return templates.TemplateResponse(request, "add_bulk.html")
+
+
 @app.get("/api/add_subject/stream")
 def add_subject_stream(name: str):
     name = name.strip()
@@ -111,6 +116,65 @@ def add_subject_stream(name: str):
                 event = {"type": "images", "subject_id": ev[1], "photo_type": ev[2], "cards": ev[3]}
             elif kind == "done":
                 event = {"type": "done", "subject_id": ev[1]}
+            else:
+                event = {"type": "error", "message": ev[1]}
+            yield f"data: {json.dumps(event)}\n\n"
+            if kind in ("done", "error"):
+                break
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.get("/api/add_subjects/stream")
+def add_subjects_stream(names: str):
+    """Bulk version of /api/add_subject/stream: `names` is a newline/comma-
+    separated list of people. Downloads + filters candidate photos for each
+    in turn so they're ready for later manual labeling, skipping over any
+    single name that fails instead of aborting the whole batch."""
+    seen = set()
+    name_list = []
+    for raw in names.replace(",", "\n").splitlines():
+        name = raw.strip()
+        if name and name not in seen:
+            seen.add(name)
+            name_list.append(name)
+    if not name_list:
+        raise HTTPException(400, "names is required")
+
+    def event_stream():
+        events: "queue.Queue[tuple[str, ...]]" = queue.Queue()
+
+        def log(message: str) -> None:
+            events.put(("log", message))
+
+        def on_images(subject_id: str, photo_type: str, cards: list[dict]) -> None:
+            events.put(("images", subject_id, photo_type, cards))
+
+        def on_subject_done(name: str, subject_id: str, status: str, error: str | None) -> None:
+            events.put(("subject_done", name, subject_id, status, error))
+
+        def worker() -> None:
+            try:
+                results = add_subject_flow.run_add_subjects(
+                    name_list, log, on_images=on_images, on_subject_done=on_subject_done
+                )
+                events.put(("done", results))
+            except Exception as e:
+                events.put(("error", str(e)))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+        while True:
+            ev = events.get()
+            kind = ev[0]
+            if kind == "log":
+                event = {"type": "log", "message": ev[1]}
+            elif kind == "images":
+                event = {"type": "images", "subject_id": ev[1], "photo_type": ev[2], "cards": ev[3]}
+            elif kind == "subject_done":
+                event = {"type": "subject_done", "name": ev[1], "subject_id": ev[2], "status": ev[3], "error": ev[4]}
+            elif kind == "done":
+                event = {"type": "done", "results": ev[1]}
             else:
                 event = {"type": "error", "message": ev[1]}
             yield f"data: {json.dumps(event)}\n\n"

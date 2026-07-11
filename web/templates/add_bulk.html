@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Bulk add &mdash; aging dataset review</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="site-title">Aging Dataset</span>
+    <nav class="header-nav">
+      <a href="/" class="btn btn-ghost">&larr; Search</a>
+      <a href="/library" class="btn btn-ghost">Library &rarr;</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+  <h1>Bulk add subjects</h1>
+  <p>
+    Paste one name per line (or comma-separated), e.g. "Tom Hanks". Each name
+    is looked up online (birth year, parents), then candidate photos are
+    downloaded and filtered for all 4 slots (self 50-60, self 30-40,
+    mother 50-60, father 50-60) &mdash; ready for manual labeling in the
+    <a href="/library">library</a> afterwards. Names are processed one at a
+    time; a failure on one name doesn't stop the rest.
+  </p>
+
+  <div class="toolbar" style="flex-direction: column; align-items: stretch; max-width: 480px;">
+    <textarea id="names-input" rows="8" placeholder="Tom Hanks&#10;Meryl Streep&#10;Denzel Washington"
+              style="font: inherit; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db; resize: vertical;"></textarea>
+    <button id="start-btn" style="margin-top: 0.5rem;">Start batch</button>
+  </div>
+
+  <pre id="log"></pre>
+
+  <table id="results-table" style="display:none; border-collapse: collapse; margin-top: 1rem;">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding: 4px 12px 4px 0;">Name</th>
+        <th style="text-align:left; padding: 4px 12px 4px 0;">Status</th>
+        <th style="text-align:left; padding: 4px 12px 4px 0;"></th>
+      </tr>
+    </thead>
+    <tbody id="results-body"></tbody>
+  </table>
+</div>
+
+<script>
+  const startBtn = document.getElementById("start-btn");
+  const namesInput = document.getElementById("names-input");
+  const log = document.getElementById("log");
+  const resultsTable = document.getElementById("results-table");
+  const resultsBody = document.getElementById("results-body");
+
+  function appendLog(line) {
+    log.textContent += line + "\n";
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function addResultRow(name, subjectId, status, error) {
+    resultsTable.style.display = "";
+    const tr = document.createElement("tr");
+    const statusLabel = status === "ok" ? "✓ done" : "✗ failed";
+    const link = status === "ok"
+      ? `<a href="/subject/${subjectId}">view</a>`
+      : `<span title="${escHtml(error || "")}">${escHtml(error || "")}</span>`;
+    tr.innerHTML = `
+      <td style="padding: 4px 12px 4px 0;">${escHtml(name)}</td>
+      <td style="padding: 4px 12px 4px 0;">${statusLabel}</td>
+      <td style="padding: 4px 12px 4px 0;">${link}</td>`;
+    resultsBody.appendChild(tr);
+  }
+
+  startBtn.addEventListener("click", () => {
+    const names = namesInput.value
+      .split(/[\n,]/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (!names.length) return;
+
+    startBtn.disabled = true;
+    log.textContent = "";
+    resultsBody.innerHTML = "";
+    resultsTable.style.display = "none";
+    appendLog(`Starting batch of ${names.length} name(s)...`);
+
+    const es = new EventSource("/api/add_subjects/stream?names=" + encodeURIComponent(names.join("\n")));
+    es.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.type === "log") {
+        appendLog(data.message);
+      } else if (data.type === "subject_done") {
+        addResultRow(data.name, data.subject_id, data.status, data.error);
+      } else if (data.type === "done") {
+        appendLog("\nBatch complete.");
+        startBtn.disabled = false;
+        es.close();
+      } else if (data.type === "error") {
+        appendLog("\nERROR: " + data.message);
+        startBtn.disabled = false;
+        es.close();
+      }
+    };
+    es.onerror = () => {
+      appendLog("\n(connection closed)");
+      startBtn.disabled = false;
+      es.close();
+    };
+  });
+</script>
+</body>
+</html>

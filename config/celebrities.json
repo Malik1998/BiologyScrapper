@@ -384,6 +384,18 @@
         }
       },
       "notes": "The birth years of her parents are not mentioned in the provided search results."
+    },
+    {
+      "id": "tom_hanks",
+      "name": "Tom Hanks",
+      "category": "other",
+      "birth_year": 1956,
+      "death_year": null,
+      "parents": {
+        "mother": null,
+        "father": null
+      },
+      "notes": "LLM research failed (404 Client Error: Not Found for url: https://openrouter.ai/api/v1/chat/completions/api/v1/chat/completions); birth year 1956 guessed from search snippets."
     }
   ]
 }
