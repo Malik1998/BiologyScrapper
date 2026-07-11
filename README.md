@@ -61,6 +61,17 @@ silently disabled and the pipeline behaves exactly as before - this is the
 same opt-in pattern as `OPENROUTER_API_KEY`. Image bytes are never sent to
 Langfuse (redacted to `<elided>` in the trace input) to keep traces small.
 
+**Known issue (as of mid-2026):** `docker compose up` in the Langfuse repo may
+fail with `pull access denied for cgr.dev/chainguard/minio` - their default
+minio image is currently ungated for anonymous pulls upstream
+([langfuse#11090](https://github.com/langfuse/langfuse/issues/11090),
+[langfuse#10488](https://github.com/langfuse/langfuse/issues/10488)). First
+try `git pull` in the Langfuse checkout in case it's since been patched; if
+not, edit `docker-compose.yml` in that checkout and change the `minio`
+service's `image:` line to a pinned Docker Hub tag, e.g.
+`minio/minio:RELEASE.2024-11-07T00-52-20Z`, keeping its `command`/`environment`/
+`volumes` as-is.
+
 ## Directory layout
 
 ```
