@@ -12,6 +12,7 @@
   <div class="header-inner">
     <span class="site-title">FLR reliability test</span>
     <nav class="header-nav">
+      <a href="/annotate/results" class="btn btn-ghost">View all results &rarr;</a>
       <a href="/" class="btn btn-ghost">&larr; back home</a>
     </nav>
   </div>
@@ -39,8 +40,8 @@
       <div>
         Scoring as <strong id="rater-name"></strong>
         &middot; <span id="progress-text"></span>
-        <button id="show-mine" class="btn-link" type="button">my scored photos</button>
-        <button id="switch-name" class="btn-link" type="button">(switch name)</button>
+        <button id="show-mine" class="btn-link" type="button">My scored photos</button> <br>
+        <button id="switch-name" class="btn-link" type="button">Switch name</button>
       </div>
       <div class="progress-bar-track"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
     </div>
@@ -92,6 +93,7 @@
     </div>
   </div>
 
+  {% include "_annotate_rules.html" %}
 </div>
 
 <script src="/static/annotate.js"></script>

@@ -164,6 +164,42 @@ def my_responses(display_name: str) -> list[dict]:
     return out
 
 
+def all_responses() -> dict:
+    """Every rater's saved scores for every image, in batch order - powers
+    the read-only /annotate/results page (view what everyone answered, e.g.
+    to eyeball agreement before computing kappa properly)."""
+    batch = load_batch()
+    raters = {}
+    if RATERS_PATH.exists():
+        raters = json.loads(RATERS_PATH.read_text())
+
+    by_rater = {slug: _load_responses(slug) for slug in raters}
+
+    images = []
+    for image in batch["images"]:
+        responses = []
+        for slug, entry in raters.items():
+            response = by_rater[slug].get(image["image_id"])
+            if response is None:
+                continue
+            responses.append({
+                "rater": entry["display_name"],
+                "scores": response["scores"],
+                "comment": response["comment"],
+                "submitted_at": response["submitted_at"],
+            })
+        responses.sort(key=lambda r: r["rater"].lower())
+        images.append({**image, "image_url": image_url(image), "responses": responses})
+
+    return {
+        "raters": [
+            {"display_name": v["display_name"], **progress_for(v["display_name"])}
+            for v in raters.values()
+        ],
+        "images": images,
+    }
+
+
 def team_progress() -> dict:
     """Per-image rater counts + per-rater completion, so the team can see
     when a photo has enough independent scores to check agreement on."""

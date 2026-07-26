@@ -408,6 +408,11 @@ def annotate_page(request: Request):
     return templates.TemplateResponse(request, "annotate.html")
 
 
+@app.get("/annotate/results")
+def annotate_results_page(request: Request):
+    return templates.TemplateResponse(request, "annotate_results.html")
+
+
 def _next_payload(name: str) -> dict:
     return {
         "image": ad.next_image_for(name),
@@ -467,5 +472,13 @@ def api_annotate_mine(name: str):
 def api_annotate_team_progress():
     try:
         return ad.team_progress()
+    except ad.BatchNotBuilt as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/annotate/results")
+def api_annotate_results():
+    try:
+        return ad.all_responses()
     except ad.BatchNotBuilt as e:
         raise HTTPException(400, str(e))

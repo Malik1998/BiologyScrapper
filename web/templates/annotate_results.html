@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FLR reliability test — all results</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/annotate.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="site-title">FLR reliability test — all results</span>
+    <nav class="header-nav">
+      <a href="/annotate" class="btn btn-ghost">&larr; back to scoring</a>
+    </nav>
+  </div>
+</header>
+
+<div class="annotate-page">
+
+  <div id="raters-summary" class="raters-summary"></div>
+
+  <p id="results-empty" class="hidden">No photos scored yet.</p>
+  <div id="results-list" class="results-list"></div>
+
+  {% include "_annotate_rules.html" %}
+</div>
+
+<script src="/static/results.js"></script>
+</body>
+</html>
