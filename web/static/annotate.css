@@ -1,0 +1,190 @@
+/* /annotate page - name gate + one-photo-at-a-time scoring form. Reuses
+   .meta-field / .meta-form / .meta-json / .btn* from style.css. */
+
+.annotate-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.gate-card {
+  max-width: 480px;
+  margin: 3rem auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gate-card h1 { font-size: 1.3rem; margin-bottom: 0.3rem; }
+.gate-desc { color: #4b5563; font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem; }
+.gate-label { font-size: 0.8rem; font-weight: 500; color: #374151; }
+
+#gate-name {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.95rem;
+}
+
+.annotate-topbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.progress-bar-track {
+  background: #e5e7eb;
+  border-radius: 999px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: #2563eb;
+  height: 100%;
+  width: 0;
+  transition: width 0.2s ease;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.done-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.done-card h2 { margin-bottom: 0.5rem; }
+
+.annotate-body {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr);
+  gap: 1.5rem;
+}
+
+.annotate-photo-col {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-self: start;
+}
+
+.annotate-image {
+  width: 100%;
+  border-radius: 8px;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.annotate-context {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.annotate-form-col {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.scale-note {
+  font-size: 0.8rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.ann-comment {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+@media (max-width: 720px) {
+  .annotate-body { grid-template-columns: 1fr; }
+}
+
+.edit-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.mine-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.mine-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.mine-panel-header h2 { font-size: 1.1rem; }
+
+.mine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.mine-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.mine-item img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.mine-item-info {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.mine-item-info .mine-item-title { font-weight: 500; color: #111827; }
+.mine-item-info .mine-item-comment { color: #6b7280; font-style: italic; }

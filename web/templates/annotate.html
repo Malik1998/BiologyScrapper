@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FLR reliability test</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/annotate.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="site-title">FLR reliability test</span>
+    <nav class="header-nav">
+      <a href="/" class="btn btn-ghost">&larr; back home</a>
+    </nav>
+  </div>
+</header>
+
+<div class="annotate-page">
+
+  <!-- Step 1: who are you -->
+  <div id="gate" class="gate-card">
+    <h1>Score a small batch of photos</h1>
+    <p class="gate-desc">
+      Enter your name so we can track which photos you've already scored and
+      make sure everyone works through the same batch (that's how we check
+      whether we actually agree with each other).
+    </p>
+    <label class="gate-label" for="gate-name">Your name</label>
+    <input id="gate-name" type="text" placeholder="e.g. Medha" autocomplete="name">
+    <button id="gate-start" class="btn btn-primary">Start / continue</button>
+    <p id="gate-error" class="err hidden"></p>
+  </div>
+
+  <!-- Step 2: annotate -->
+  <div id="session" class="hidden">
+    <div class="annotate-topbar">
+      <div>
+        Scoring as <strong id="rater-name"></strong>
+        &middot; <span id="progress-text"></span>
+        <button id="show-mine" class="btn-link" type="button">my scored photos</button>
+        <button id="switch-name" class="btn-link" type="button">(switch name)</button>
+      </div>
+      <div class="progress-bar-track"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
+    </div>
+
+    <!-- Review/edit already-submitted photos -->
+    <div id="mine-panel" class="mine-panel hidden">
+      <div class="mine-panel-header">
+        <h2>Your scored photos</h2>
+        <button id="mine-close" class="btn btn-ghost" type="button">&larr; back to scoring</button>
+      </div>
+      <p id="mine-empty" class="hidden">You haven't scored any photos yet.</p>
+      <div id="mine-list" class="mine-list"></div>
+    </div>
+
+    <div id="done-message" class="done-card hidden">
+      <h2>All done — thank you!</h2>
+      <p>You've scored every photo in this batch. Once a second person finishes
+      the same batch we can compare scores and check inter-rater agreement.</p>
+    </div>
+
+    <div id="annotate-body" class="annotate-body hidden">
+      <div class="annotate-photo-col">
+        <img id="annotate-image" class="annotate-image" alt="photo to score">
+        <p id="annotate-context" class="annotate-context"></p>
+      </div>
+
+      <div class="annotate-form-col">
+        <div id="edit-banner" class="edit-banner hidden">
+          Editing your saved answer for this photo.
+          <button id="edit-cancel" class="btn-link" type="button">cancel</button>
+        </div>
+        <div class="meta-modal-header">
+          <h3>Scores</h3>
+          <div class="meta-mode-toggle">
+            <button class="ann-mode-btn active" data-mode="form" type="button">Form</button>
+            <button class="ann-mode-btn" data-mode="json" type="button">JSON</button>
+          </div>
+        </div>
+        <p id="scale-note" class="scale-note"></p>
+        <div id="ann-form" class="meta-form"></div>
+        <textarea id="ann-json" class="meta-json hidden"></textarea>
+
+        <label class="gate-label" for="ann-comment">Comments</label>
+        <textarea id="ann-comment" class="ann-comment" rows="3" placeholder="Anything about this photo/scoring worth flagging?"></textarea>
+
+        <button id="ann-submit" class="btn btn-primary">Submit &amp; next photo</button>
+        <p id="ann-error" class="err hidden"></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/annotate.js"></script>
+</body>
+</html>

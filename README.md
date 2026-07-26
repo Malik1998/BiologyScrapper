@@ -283,4 +283,122 @@ OpenRouter) to extract birth year, category, and parent identities *from those
 search results* (`src/research.py`) - grounding the answer in real sources
 instead of relying on the model's memory. Requires `OPENROUTER_API_KEY`.
 Existing entries are kept as-is unless `--overwrite` is passed.
+
+## FLR reliability test (`/annotate`) - Step 2
+
+Before spending real time/money on a bigger dataset, we first check whether
+the [FLR scale](https://en.wikipedia.org/wiki/Facial_laxity) can even be
+scored consistently by different people on real-world (non-standardized)
+photos. Step 2 of that check: two (or more) team members independently score
+the *same* small batch of photos, so we can measure whether they actually
+agree (inter-rater reliability) before committing to FLR as our rubric. This
+section covers that flow end to end - see `web/annotate_data.py` for the
+implementation notes this summarizes.
+
+### 1. Sample a batch from KinFaceW
+
+```bash
+.venv/bin/python -m scripts.build_kinface_ii_age_batch
+```
+
+This is `scripts/build_kinface_ii_age_batch.py`. What it does:
+
+1. Reads the public [KinFaceW-II](https://www.kinfacew.com/download.html)
+   dataset from `../KinFaceW-II` (one level above this repo - override with
+   `--source`). KinFaceW-II only, not KinFaceW-I - see below for why.
+   KinFaceW stores each parent-child pair as two files,
+   `<code>_<pair_index>_1.jpg` (parent) and `..._2.jpg` (child), inside one
+   folder per relation: `father-dau`, `father-son`, `mother-dau`, `mother-son`.
+2. Reads child ages from
+   `../kinface_age_estimation/results/kinfacew_children_age_estimation.csv`
+   (a DeepFace age-estimation pass over just the child photo of each pair -
+   see `kinface_age_estimation/run_age_estimation.py` - this is why only
+   KinFaceW-II is in scope here: that's the dataset the csv covers).
+   **Parents have no estimated age** - DeepFace was only run on the child
+   photos, so parent entries carry `"child_age": null` rather than a guess.
+3. Samples `--count` pairs (default **50**) stratified evenly across the
+   child's estimated age: pairs are grouped by integer age, then picked
+   round-robin youngest-to-oldest so every age bucket contributes 1-2 pairs
+   (capped by how many that age actually has) instead of the sample being
+   dominated by the most common ages. `--seed` (default 42) makes it
+   reproducible.
+4. Copies just the sampled pairs into `data/kinface_photos/<relation>/...jpg`,
+   preserving KinFaceW's own filenames/layout (so parent/child pairing is
+   still recoverable later, e.g. for the Step 4 pilot).
+5. Writes `data/annotations/batch.json`: the fixed, ordered list of those 100
+   photos (one entry per *individual photo*, not per pair - FLR is scored per
+   photo; each carries `child_age`, null for the parent photo). This file
+   **is the batch everyone annotates** - re-running the script without
+   `--force` refuses to overwrite it, since reshuffling it after people have
+   started would break the "same batch" guarantee. If you do need to
+   resample, archive `data/annotations/{responses,raters.json,batch.json}`
+   first (see `data/annotations/archive/` for an example) so nobody's
+   completed work is silently invalidated - `--force` only overwrites
+   `batch.json`, it won't do that archiving for you.
+
+The older `scripts/build_kinface_batch.py` (KinFaceW-I, unstratified) still
+works the same way if you ever want a plain random sample instead.
+
+`data/` (including `data/kinface_photos` and `data/annotations`) is
+gitignored, consistent with KinFaceW's non-redistribution terms of use -
+images stay local, never pushed to git or the internet.
+
+### 2. Score photos
+
+```bash
+.venv/bin/uvicorn web.app:app --reload
+```
+
+Open http://127.0.0.1:8000/annotate. Flow:
+
+1. **Enter your name.** No auth - it's just used to track your personal
+   progress through the batch (remembered in the browser via `localStorage`,
+   and server-side by a slugified version of the name, e.g. "Medha" ->
+   `medha`).
+2. You're shown **one photo at a time** with a form pre-filled empty
+   (`config/annotation_schema.json` - the same "edit config, not code" pattern
+   as `config/image_meta_schema.json` used by the existing Meta modal): 4 FLR
+   signs/regions (eyelid folds, nasojugal folds, jowls, neck profile), each a
+   0-4 severity dropdown plus an explicit "NA - not scoreable in this photo"
+   option, plus photo quality/angle tags. A "Form" / "JSON" toggle lets you
+   edit the same values as raw JSON if that's faster. There's a separate free-text
+   comments box below it.
+3. **Submit & next photo** saves your scores to
+   `data/annotations/responses/<your_slug>/<image_id>.json` and immediately
+   serves your next unscored photo from the batch.
+4. Because `batch.json` is the same fixed list for everyone, every rater who
+   finishes it has scored the exact same 100 photos (50 pairs) - that's what
+   makes the inter-rater comparison possible; no per-photo assignment/overlap
+   logic is needed. `/annotate` just skips whatever *you* have already
+   submitted, so you'll never be shown the same photo twice in the normal
+   flow.
+5. **"my scored photos"** (top of the page once you've scored at least one
+   photo) lists everything you've submitted so far with a thumbnail and your
+   saved scores/comment; **Edit** reopens that photo prefilled so you can fix
+   a typo'd score without disturbing your place in the main queue - saving
+   just overwrites that one response file and takes you back to the list.
+6. `GET /api/annotate/team_progress` (JSON) shows, per photo, which raters
+   have scored it yet and how many raters have finished overall - useful for
+   knowing when there's enough overlap to actually compute agreement (e.g.
+   weighted kappa) on.
+
+### Data layout
+
+```
+data/kinface_photos/<relation>/<pair>_<1|2>.jpg   sampled KinFaceW photos
+data/annotations/batch.json                       fixed list every rater works through
+data/annotations/raters.json                      name slug -> display name
+data/annotations/responses/<rater_slug>/<image_id with "/" -> "__">.json
+                                                    one file per (rater, photo):
+                                                    {rater, image_id, submitted_at, scores, comment}
+data/annotations/archive/<...>/                    old batch+responses set aside when
+                                                    the batch was last resampled from scratch
+```
+
+### Refining the rubric (Step 3)
+
+`config/annotation_schema.json` is config, not code - to add/remove/reword a
+scored field (e.g. once we know which FLR signs actually survive as
+reliably-scoreable, per the "modified real-world-photo rubric" discussion),
+just edit that file. No changes needed in `web/app.py` or `annotate.js`.
 # BiologyScrapper

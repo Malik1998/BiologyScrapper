@@ -1,0 +1,38 @@
+{
+  "//": "Fields shown on the /annotate page for the FLR reliability test (Step 2). Add/remove/reword fields here without touching code - each becomes a form control automatically, same as config/image_meta_schema.json. 'flr_score' renders as a 0-4 severity dropdown plus a not-scoreable option; refine wording once Step 3 (younger-face grading) findings come in.",
+  "scale_note": "0 = firm / no visible laxity for this sign, 4 = severe laxity. Pick 'NA - not scoreable' rather than guessing if the sign truly isn't visible/judgeable in this photo (angle, resolution, occlusion, etc).",
+  "fields": [
+    {
+      "key": "upper_face_eyelid_folds",
+      "label": "Upper face — eyelid folds",
+      "type": "flr_score"
+    },
+    {
+      "key": "middle_face_nasojugal_folds",
+      "label": "Middle face — nasojugal folds",
+      "type": "flr_score"
+    },
+    {
+      "key": "lower_face_jowls",
+      "label": "Lower face — jowls",
+      "type": "flr_score"
+    },
+    {
+      "key": "neck_profile",
+      "label": "Neck — neck profile",
+      "type": "flr_score"
+    },
+    {
+      "key": "photo_quality",
+      "label": "Photo quality",
+      "type": "enum",
+      "options": ["good", "fair", "poor"]
+    },
+    {
+      "key": "photo_angle",
+      "label": "Photo angle",
+      "type": "enum",
+      "options": ["frontal", "slight_angle", "profile", "other"]
+    }
+  ]
+}

@@ -37,6 +37,7 @@ from src.stages.export_local import ExportLocalStage
 from src.stages.generate_html import GenerateHtmlStage
 
 from . import add_subject as add_subject_flow
+from . import annotate_data as ad
 from . import data_access as da
 
 app = FastAPI(title="Aging dataset review")
@@ -395,3 +396,76 @@ def export_html():
     ctx = da.build_pipeline_context()
     GenerateHtmlStage(output="data/review/index.html").run(ctx)
     return {"status": "ok", "path": "/data/review/index.html"}
+
+
+# ── Step 2: FLR reliability test annotation ─────────────────────────────────
+# Two (or more) team members independently score the same small, fixed batch
+# of KinFaceW photos so we can check whether they actually agree. See
+# web/annotate_data.py for the storage/assignment design.
+
+@app.get("/annotate")
+def annotate_page(request: Request):
+    return templates.TemplateResponse(request, "annotate.html")
+
+
+def _next_payload(name: str) -> dict:
+    return {
+        "image": ad.next_image_for(name),
+        "progress": ad.progress_for(name),
+    }
+
+
+@app.get("/api/annotate/schema")
+def api_annotate_schema():
+    return ad.load_schema()
+
+
+@app.get("/api/annotate/next")
+def api_annotate_next(name: str):
+    name = name.strip()
+    if not name:
+        raise HTTPException(400, "name is required")
+    try:
+        return _next_payload(name)
+    except ad.BatchNotBuilt as e:
+        raise HTTPException(400, str(e))
+
+
+class AnnotateSubmitRequest(BaseModel):
+    name: str
+    image_id: str
+    scores: dict
+    comment: str = ""
+
+
+@app.post("/api/annotate/submit")
+def api_annotate_submit(req: AnnotateSubmitRequest):
+    name = req.name.strip()
+    if not name:
+        raise HTTPException(400, "name is required")
+    try:
+        ad.submit_response(name, req.image_id, req.scores, req.comment)
+        return _next_payload(name)
+    except ad.BatchNotBuilt as e:
+        raise HTTPException(400, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/annotate/mine")
+def api_annotate_mine(name: str):
+    name = name.strip()
+    if not name:
+        raise HTTPException(400, "name is required")
+    try:
+        return {"items": ad.my_responses(name)}
+    except ad.BatchNotBuilt as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/annotate/team_progress")
+def api_annotate_team_progress():
+    try:
+        return ad.team_progress()
+    except ad.BatchNotBuilt as e:
+        raise HTTPException(400, str(e))
