@@ -3,7 +3,8 @@ stratified evenly across the child's estimated age, for the FLR reliability
 check (Step 2). Age comes from
 ../kinface_age_estimation/results/kinfacew_children_age_estimation.csv
 (DeepFace age estimation run on the child photo of each pair only - parents'
-ages were never estimated, so parent images get no age).
+ages were never estimated). Age is only used to pick a balanced sample - it
+is not stored in batch.json or shown anywhere in the annotation UI.
 
 Sampling: group KinFaceW-II pairs by the child's predicted age (rounded to
 an int), then round-robin across ages (youngest to oldest) taking one pair
@@ -96,7 +97,7 @@ def build_batch(source_root: Path, csv_path: Path, count: int, seed: int) -> dic
         dest_rel_dir = DEST_DIR / relation
         dest_rel_dir.mkdir(parents=True, exist_ok=True)
 
-        for slot, role_key, age in (("1", "parent", None), ("2", "child", pick["child_age"])):
+        for slot, role_key in (("1", "parent"), ("2", "child")):
             filename = f"{pair_id}_{slot}.jpg"
             src = source_root / "images" / relation / filename
             if not src.exists():
@@ -111,10 +112,9 @@ def build_batch(source_root: Path, csv_path: Path, count: int, seed: int) -> dic
                 "pair_index": pair_id,
                 "role": role_key,
                 "role_label": roles[role_key],
-                "child_age": age,  # estimated age of the child; null for parent photos (never estimated)
             })
 
-    return {
+    batch = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "source": str(source_root),
         "sampling": "stratified_by_child_age",
@@ -123,6 +123,7 @@ def build_batch(source_root: Path, csv_path: Path, count: int, seed: int) -> dic
         "seed": seed,
         "images": images,
     }
+    return batch, sampled
 
 
 def main() -> None:
@@ -150,15 +151,15 @@ def main() -> None:
     if DEST_DIR.exists():
         shutil.rmtree(DEST_DIR)
 
-    batch = build_batch(source_root, csv_path, args.count, args.seed)
+    batch, sampled = build_batch(source_root, csv_path, args.count, args.seed)
 
     BATCH_PATH.parent.mkdir(parents=True, exist_ok=True)
     BATCH_PATH.write_text(json.dumps(batch, indent=2))
 
     n_pairs = len(batch["images"]) // 2
-    ages = sorted({img["child_age"] for img in batch["images"] if img["child_age"] is not None})
+    ages = sorted({pick["child_age"] for pick in sampled})
     print(f"Wrote {len(batch['images'])} photos ({n_pairs} pairs) to {DEST_DIR}/")
-    print(f"Child ages covered ({len(ages)} distinct): {ages}")
+    print(f"Child ages covered ({len(ages)} distinct, not stored per-photo): {ages}")
     print(f"Batch manifest: {BATCH_PATH}")
 
 

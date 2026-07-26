@@ -315,7 +315,8 @@ This is `scripts/build_kinface_ii_age_batch.py`. What it does:
    see `kinface_age_estimation/run_age_estimation.py` - this is why only
    KinFaceW-II is in scope here: that's the dataset the csv covers).
    **Parents have no estimated age** - DeepFace was only run on the child
-   photos, so parent entries carry `"child_age": null` rather than a guess.
+   photos. Age is only used to pick a balanced sample; it isn't stored in
+   `batch.json` or shown anywhere in the annotation UI.
 3. Samples `--count` pairs (default **50**) stratified evenly across the
    child's estimated age: pairs are grouped by integer age, then picked
    round-robin youngest-to-oldest so every age bucket contributes 1-2 pairs
@@ -327,8 +328,7 @@ This is `scripts/build_kinface_ii_age_batch.py`. What it does:
    still recoverable later, e.g. for the Step 4 pilot).
 5. Writes `data/annotations/batch.json`: the fixed, ordered list of those 100
    photos (one entry per *individual photo*, not per pair - FLR is scored per
-   photo; each carries `child_age`, null for the parent photo). This file
-   **is the batch everyone annotates** - re-running the script without
+   photo). This file **is the batch everyone annotates** - re-running the script without
    `--force` refuses to overwrite it, since reshuffling it after people have
    started would break the "same batch" guarantee. If you do need to
    resample, archive `data/annotations/{responses,raters.json,batch.json}`

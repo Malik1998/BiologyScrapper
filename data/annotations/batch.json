@@ -1,0 +1,910 @@
+{
+  "created_at": "2026-07-26T11:03:53.462177+00:00",
+  "source": "/Users/malikgazizullin/Downloads/usable/biology/KinFaceW-II",
+  "sampling": "stratified_by_child_age",
+  "age_csv": "/Users/malikgazizullin/Downloads/usable/biology/kinface_age_estimation/results/kinfacew_children_age_estimation.csv",
+  "count": 50,
+  "seed": 42,
+  "images": [
+    {
+      "image_id": "mother-son/ms_112_1",
+      "path": "mother-son/ms_112_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_112",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_112_2",
+      "path": "mother-son/ms_112_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_112",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-son/ms_037_1",
+      "path": "mother-son/ms_037_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_037",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_037_2",
+      "path": "mother-son/ms_037_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_037",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-son/fs_085_1",
+      "path": "father-son/fs_085_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_085",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_085_2",
+      "path": "father-son/fs_085_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_085",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-dau/fd_009_1",
+      "path": "father-dau/fd_009_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_009",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_009_2",
+      "path": "father-dau/fd_009_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_009",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_212_1",
+      "path": "father-dau/fd_212_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_212",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_212_2",
+      "path": "father-dau/fd_212_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_212",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-son/fs_046_1",
+      "path": "father-son/fs_046_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_046",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_046_2",
+      "path": "father-son/fs_046_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_046",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-son/ms_091_1",
+      "path": "mother-son/ms_091_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_091",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_091_2",
+      "path": "mother-son/ms_091_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_091",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-dau/md_027_1",
+      "path": "mother-dau/md_027_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_027",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_027_2",
+      "path": "mother-dau/md_027_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_027",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_138_1",
+      "path": "father-dau/fd_138_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_138",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_138_2",
+      "path": "father-dau/fd_138_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_138",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-son/fs_161_1",
+      "path": "father-son/fs_161_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_161",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_161_2",
+      "path": "father-son/fs_161_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_161",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-dau/md_127_1",
+      "path": "mother-dau/md_127_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_127",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_127_2",
+      "path": "mother-dau/md_127_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_127",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_150_1",
+      "path": "father-dau/fd_150_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_150",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_150_2",
+      "path": "father-dau/fd_150_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_150",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_054_1",
+      "path": "mother-dau/md_054_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_054",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_054_2",
+      "path": "mother-dau/md_054_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_054",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-son/ms_029_1",
+      "path": "mother-son/ms_029_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_029",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_029_2",
+      "path": "mother-son/ms_029_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_029",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-dau/fd_096_1",
+      "path": "father-dau/fd_096_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_096",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_096_2",
+      "path": "father-dau/fd_096_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_096",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_242_1",
+      "path": "mother-dau/md_242_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_242",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_242_2",
+      "path": "mother-dau/md_242_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_242",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-son/fs_020_1",
+      "path": "father-son/fs_020_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_020",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_020_2",
+      "path": "father-son/fs_020_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_020",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-dau/md_002_1",
+      "path": "mother-dau/md_002_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_002",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_002_2",
+      "path": "mother-dau/md_002_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_002",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-son/ms_042_1",
+      "path": "mother-son/ms_042_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_042",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_042_2",
+      "path": "mother-son/ms_042_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_042",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-son/ms_087_1",
+      "path": "mother-son/ms_087_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_087",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_087_2",
+      "path": "mother-son/ms_087_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_087",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-dau/md_218_1",
+      "path": "mother-dau/md_218_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_218",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_218_2",
+      "path": "mother-dau/md_218_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_218",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_108_1",
+      "path": "father-dau/fd_108_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_108",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_108_2",
+      "path": "father-dau/fd_108_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_108",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-son/fs_003_1",
+      "path": "father-son/fs_003_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_003",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_003_2",
+      "path": "father-son/fs_003_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_003",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-dau/fd_018_1",
+      "path": "father-dau/fd_018_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_018",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_018_2",
+      "path": "father-dau/fd_018_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_018",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_004_1",
+      "path": "mother-dau/md_004_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_004",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_004_2",
+      "path": "mother-dau/md_004_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_004",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_249_1",
+      "path": "mother-dau/md_249_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_249",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_249_2",
+      "path": "mother-dau/md_249_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_249",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_243_1",
+      "path": "mother-dau/md_243_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_243",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_243_2",
+      "path": "mother-dau/md_243_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_243",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_055_1",
+      "path": "mother-dau/md_055_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_055",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_055_2",
+      "path": "mother-dau/md_055_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_055",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-son/ms_066_1",
+      "path": "mother-son/ms_066_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_066",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_066_2",
+      "path": "mother-son/ms_066_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_066",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-son/ms_113_1",
+      "path": "mother-son/ms_113_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_113",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_113_2",
+      "path": "mother-son/ms_113_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_113",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-son/ms_176_1",
+      "path": "mother-son/ms_176_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_176",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_176_2",
+      "path": "mother-son/ms_176_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_176",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-son/fs_070_1",
+      "path": "father-son/fs_070_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_070",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_070_2",
+      "path": "father-son/fs_070_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_070",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-dau/fd_049_1",
+      "path": "father-dau/fd_049_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_049",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_049_2",
+      "path": "father-dau/fd_049_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_049",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_207_1",
+      "path": "father-dau/fd_207_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_207",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_207_2",
+      "path": "father-dau/fd_207_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_207",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_210_1",
+      "path": "father-dau/fd_210_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_210",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_210_2",
+      "path": "father-dau/fd_210_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_210",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_138_1",
+      "path": "mother-dau/md_138_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_138",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_138_2",
+      "path": "mother-dau/md_138_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_138",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_142_1",
+      "path": "mother-dau/md_142_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_142",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_142_2",
+      "path": "mother-dau/md_142_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_142",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_061_1",
+      "path": "mother-dau/md_061_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_061",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_061_2",
+      "path": "mother-dau/md_061_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_061",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_189_1",
+      "path": "father-dau/fd_189_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_189",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_189_2",
+      "path": "father-dau/fd_189_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_189",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_030_1",
+      "path": "father-dau/fd_030_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_030",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_030_2",
+      "path": "father-dau/fd_030_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_030",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_144_1",
+      "path": "mother-dau/md_144_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_144",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_144_2",
+      "path": "mother-dau/md_144_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_144",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-dau/fd_059_1",
+      "path": "father-dau/fd_059_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_059",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_059_2",
+      "path": "father-dau/fd_059_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_059",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-son/ms_118_1",
+      "path": "mother-son/ms_118_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_118",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_118_2",
+      "path": "mother-son/ms_118_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_118",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-dau/fd_064_1",
+      "path": "father-dau/fd_064_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_064",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_064_2",
+      "path": "father-dau/fd_064_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_064",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "mother-dau/md_186_1",
+      "path": "mother-dau/md_186_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_186",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_186_2",
+      "path": "mother-dau/md_186_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_186",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-son/fs_121_1",
+      "path": "father-son/fs_121_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_121",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_121_2",
+      "path": "father-son/fs_121_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_121",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "father-dau/fd_106_1",
+      "path": "father-dau/fd_106_1.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_106",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-dau/fd_106_2",
+      "path": "father-dau/fd_106_2.jpg",
+      "relation": "father-dau",
+      "relation_label": "Father-Daughter",
+      "pair_index": "fd_106",
+      "role": "child",
+      "role_label": "daughter"
+    },
+    {
+      "image_id": "father-son/fs_144_1",
+      "path": "father-son/fs_144_1.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_144",
+      "role": "parent",
+      "role_label": "father"
+    },
+    {
+      "image_id": "father-son/fs_144_2",
+      "path": "father-son/fs_144_2.jpg",
+      "relation": "father-son",
+      "relation_label": "Father-Son",
+      "pair_index": "fs_144",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-son/ms_102_1",
+      "path": "mother-son/ms_102_1.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_102",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-son/ms_102_2",
+      "path": "mother-son/ms_102_2.jpg",
+      "relation": "mother-son",
+      "relation_label": "Mother-Son",
+      "pair_index": "ms_102",
+      "role": "child",
+      "role_label": "son"
+    },
+    {
+      "image_id": "mother-dau/md_005_1",
+      "path": "mother-dau/md_005_1.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_005",
+      "role": "parent",
+      "role_label": "mother"
+    },
+    {
+      "image_id": "mother-dau/md_005_2",
+      "path": "mother-dau/md_005_2.jpg",
+      "relation": "mother-dau",
+      "relation_label": "Mother-Daughter",
+      "pair_index": "md_005",
+      "role": "child",
+      "role_label": "daughter"
+    }
+  ]
+}
