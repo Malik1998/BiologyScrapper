@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>annotatev2 admin</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="admin-page">
+  <h1>Photo collection - admin</h1>
+  {% if is_open %}
+  <p class="err" style="margin-bottom: 1rem;">
+    This page is currently open to anyone with the link - no login required
+    (ADMIN_USER/ADMIN_PASSWORD aren't set in .env). Fine for local testing,
+    but set both before uploading real participant photos.
+  </p>
+  {% endif %}
+  <p class="admin-summary">
+    {{ total_photos }} photos across {{ rows|length }} submissions ·
+    remote sync backend: <strong>{{ remote_backend }}</strong>
+  </p>
+
+  {% for row in rows %}
+  <div class="family-block">
+    <h2>{{ row.submission.family_label }}</h2>
+    <div class="meta">{{ row.done_count }}/{{ row.total_count }} photos · submitted {{ row.submission.created_at }}</div>
+    <div class="thumb-row">
+      {% for photo in row.photos %}
+      <div>
+        <a href="/admin/photo/{{ photo.id }}" target="_blank">
+          <img src="/admin/photo/{{ photo.id }}/cropped" alt="{{ photo.photo_type }}" loading="lazy">
+        </a>
+        <div class="thumb-label">{{ photo.photo_type }}{% if photo.sync_status != 'local_only' %} · {{ photo.sync_status }}{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <p class="muted">No photos uploaded yet.</p>
+  {% endfor %}
+</div>
+</body>
+</html>

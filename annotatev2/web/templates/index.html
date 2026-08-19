@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Photo collection</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="page">
+  <div class="card">
+    <h1>Family photos</h1>
+    <p class="muted">Please upload the four photos below. One parent photo is optional if it's not available.</p>
+
+    <label for="in-family">Family / subject name</label>
+    <input id="in-family" type="text" autocomplete="off" placeholder="e.g. your last name">
+    <p id="family-error" class="err hidden"></p>
+  </div>
+
+  <div id="slots"></div>
+
+  <div class="card">
+    <p id="submit-status" class="muted"></p>
+    <p id="submit-error" class="err hidden"></p>
+    <button id="submit-all" class="btn btn-primary btn-block" disabled>Submit photos</button>
+  </div>
+</div>
+
+<!-- Crop overlay (shared, positioned over whichever slot is active) -->
+<div id="crop-modal" class="crop-modal hidden">
+  <div class="crop-modal-inner">
+    <p class="instruction">Adjust the box to frame the photo, then confirm.</p>
+    <div id="crop-frame" class="crop-frame">
+      <img id="crop-image" alt="selected photo">
+      <div id="crop-box" class="crop-box">
+        <div class="handle handle-nw" data-handle="nw"></div>
+        <div class="handle handle-ne" data-handle="ne"></div>
+        <div class="handle handle-sw" data-handle="sw"></div>
+        <div class="handle handle-se" data-handle="se"></div>
+      </div>
+    </div>
+    <p id="crop-error" class="err hidden"></p>
+    <div class="capture-controls">
+      <button id="crop-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="crop-confirm" class="btn btn-primary btn-large">Save crop</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+[
+  {"id": "self_30_40", "label": "You, ~20-40", "hint": "A recent photo of yourself.", "required": true},
+  {"id": "self_50_60", "label": "You, ~50-60", "hint": "An older photo of yourself, if you have one.", "required": true},
+  {"id": "mother_50_60", "label": "Mother, ~50-60", "hint": "A photo of your mother.", "required": false},
+  {"id": "father_50_60", "label": "Father, ~50-60", "hint": "A photo of your father.", "required": false}
+]

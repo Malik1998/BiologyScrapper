@@ -1,0 +1,196 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0f172a;
+  color: #1a1a2e;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #f7f8fa;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-bottom: 2rem;
+}
+
+.card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #fff;
+}
+
+h1 { font-size: 1.4rem; color: #0f172a; margin-bottom: 0.3rem; }
+.muted { color: #64748b; font-size: 0.92rem; line-height: 1.4; }
+.hint { color: #94a3b8; font-size: 0.8rem; margin-top: -0.2rem; margin-bottom: 0.3rem; }
+
+label { font-size: 0.9rem; font-weight: 600; color: #334155; }
+
+input[type="text"], input[type="number"] {
+  font-size: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+}
+input:focus { outline: none; border-color: #2563eb; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:active { background: #1d4ed8; }
+.btn-ghost { background: #e2e8f0; color: #334155; }
+.btn-ghost:active { background: #cbd5e1; }
+.btn-large { flex: 1; padding: 0.9rem; font-size: 1.05rem; }
+
+.err {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.hidden { display: none !important; }
+
+/* ── Photo slots ────────────────────────────────────────────────────── */
+
+.slot-card { gap: 0.4rem; }
+
+.slot-preview {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #f1f5f9;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slot-preview img { width: 100%; height: 100%; object-fit: cover; }
+.slot-preview:empty::before {
+  content: "No photo yet";
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.slot-file-input {
+  font-size: 0.85rem;
+}
+
+.slot-status { font-size: 0.85rem; }
+.slot-status.ok { color: #16a34a; font-weight: 600; }
+.slot-status.err { color: #dc2626; }
+
+/* ── Crop modal ─────────────────────────────────────────────────────── */
+
+.crop-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 200;
+}
+
+.crop-modal-inner {
+  background: #fff;
+  border-radius: 14px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.instruction {
+  text-align: center;
+  padding: 1rem 1.2rem 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.capture-controls {
+  display: flex;
+  gap: 0.7rem;
+  padding: 1rem 1.2rem 1.2rem;
+}
+
+.crop-frame {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  touch-action: none;
+  background: #111;
+  line-height: 0; /* so the frame's box hugs the image exactly - crop math
+                     assumes clientWidth/clientHeight == visible image size */
+}
+
+#crop-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.crop-box {
+  position: absolute;
+  border: 2px solid #22c55e;
+  background: rgba(34,197,94,0.12);
+  touch-action: none;
+  cursor: move;
+}
+
+.handle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: -11px;
+  background: #22c55e;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  touch-action: none;
+}
+.handle-nw { top: 0; left: 0; cursor: nwse-resize; }
+.handle-ne { top: 0; right: 0; margin-right: -11px; cursor: nesw-resize; }
+.handle-sw { bottom: 0; left: 0; margin-bottom: -11px; cursor: nesw-resize; }
+.handle-se { bottom: 0; right: 0; margin-right: -11px; margin-bottom: -11px; cursor: nwse-resize; }
+
+/* ── Admin ──────────────────────────────────────────────────────────── */
+
+.admin-page { max-width: 1100px; margin: 0 auto; padding: 1.5rem; background: #f7f8fa; }
+.admin-page h1 { margin-bottom: 0.3rem; }
+.admin-summary { color: #64748b; margin-bottom: 1.5rem; }
+.family-block { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+.family-block h2 { font-size: 1.05rem; margin-bottom: 0.6rem; }
+.family-block .meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.6rem; }
+.thumb-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.thumb-row a img { width: 110px; height: 110px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
+.thumb-label { font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 0.15rem; }

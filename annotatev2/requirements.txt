@@ -1,0 +1,13 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+jinja2>=3.1.4
+python-dotenv>=1.0
+pillow>=10.0
+python-multipart>=0.0.9
+requests>=2.31
+boto3>=1.34
+
+# Optional - only needed if ENABLE_FACE_CHECK=true (see README "Face check").
+# Pinned below 5.x: opencv-python-headless 5.0's wheel dropped CascadeClassifier
+# from the Python bindings (verified 2026-08), which this feature relies on.
+# opencv-python-headless>=4.9,<5
