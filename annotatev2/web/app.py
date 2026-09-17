@@ -229,3 +229,19 @@ def admin_photo_cropped(photo_id: str, _: None = Depends(require_admin)):
     except FileNotFoundError:
         raise HTTPException(404)
     return Response(content=data, media_type="image/jpeg")
+
+
+@app.delete("/admin/photo/{photo_id}")
+def admin_delete_photo(photo_id: str, _: None = Depends(require_admin)):
+    if data_access.get_photo(photo_id) is None:
+        raise HTTPException(404)
+    data_access.delete_photo(photo_id)
+    return {"deleted": photo_id}
+
+
+@app.delete("/admin/submission/{submission_id}")
+def admin_delete_submission(submission_id: str, _: None = Depends(require_admin)):
+    if data_access.get_submission(submission_id) is None:
+        raise HTTPException(404)
+    data_access.delete_submission(submission_id)
+    return {"deleted": submission_id}

@@ -196,6 +196,14 @@ def delete_photo(photo_id: str) -> None:
     _photo_file_path(photo_id).unlink(missing_ok=True)
 
 
+def delete_submission(submission_id: str) -> None:
+    """Delete a submission and every photo filed under it (admin-only -
+    see web/app.py's require_admin-gated DELETE routes)."""
+    for photo in list_photos(submission_id=submission_id):
+        delete_photo(photo.id)
+    _submission_path(submission_id).unlink(missing_ok=True)
+
+
 def update_photo_sync_status(
     photo_id: str, *, status: str, remote_backend: str | None = None,
     remote_url: str | None = None, error: str | None = None,

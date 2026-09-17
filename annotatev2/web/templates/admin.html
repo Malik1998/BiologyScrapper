@@ -22,15 +22,19 @@
 
   {% for row in rows %}
   <div class="family-block">
-    <h2>{{ row.submission.family_label }}</h2>
+    <div class="family-block-header">
+      <h2>{{ row.submission.family_label }}</h2>
+      <button class="btn btn-danger btn-small" data-delete-submission="{{ row.submission.id }}">Delete family</button>
+    </div>
     <div class="meta">{{ row.done_count }}/{{ row.total_count }} photos · submitted {{ row.submission.created_at }}</div>
     <div class="thumb-row">
       {% for photo in row.photos %}
-      <div>
+      <div class="thumb" id="thumb-{{ photo.id }}">
         <a href="/admin/photo/{{ photo.id }}" target="_blank">
           <img src="/admin/photo/{{ photo.id }}/cropped" alt="{{ photo.photo_type }}" loading="lazy">
         </a>
         <div class="thumb-label">{{ photo.photo_type }}{% if photo.sync_status != 'local_only' %} · {{ photo.sync_status }}{% endif %}</div>
+        <button class="btn btn-danger btn-small" data-delete-photo="{{ photo.id }}">Delete</button>
       </div>
       {% endfor %}
     </div>
@@ -39,5 +43,35 @@
   <p class="muted">No photos uploaded yet.</p>
   {% endfor %}
 </div>
+<script>
+async function adminDelete(url) {
+  const res = await fetch(url, { method: "DELETE" });
+  if (!res.ok) {
+    alert("Delete failed (" + res.status + "). Refresh and try again.");
+    return false;
+  }
+  return true;
+}
+
+document.querySelectorAll("[data-delete-photo]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    if (!confirm("Delete this photo?")) return;
+    const photoId = btn.dataset.deletePhoto;
+    if (await adminDelete(`/admin/photo/${photoId}`)) {
+      document.getElementById(`thumb-${photoId}`).remove();
+    }
+  });
+});
+
+document.querySelectorAll("[data-delete-submission]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    if (!confirm("Delete this family and all of its photos? This cannot be undone.")) return;
+    const submissionId = btn.dataset.deleteSubmission;
+    if (await adminDelete(`/admin/submission/${submissionId}`)) {
+      btn.closest(".family-block").remove();
+    }
+  });
+});
+</script>
 </body>
 </html>

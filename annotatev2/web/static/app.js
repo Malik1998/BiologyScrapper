@@ -42,6 +42,13 @@ let cropState = null;            // { box: {left, top, width, height} } in displ
     }
   }
   updateSubmitButton();
+
+  document.getElementById("new-batch").addEventListener("click", () => {
+    if (!confirm("Start a new family? This clears the current form (already-uploaded photos stay saved on the server).")) return;
+    sessionStorage.removeItem("submission_id");
+    sessionStorage.removeItem("family_label");
+    location.reload();
+  });
 })();
 
 // ── Slot rendering ───────────────────────────────────────────────────────
