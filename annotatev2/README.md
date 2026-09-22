@@ -43,7 +43,9 @@ see "Admin dashboard" and "Remote storage" below.
 ## Running
 
 ```bash
-.venv/bin/uvicorn web.app:app --host 0.0.0.0 --port 8001
+.venv/bin/uvicorn web.app:app --port 8001
+
+cloudflared tunnel --url http://localhost:8001
 ```
 
 Open `http://127.0.0.1:8001/` — that's the upload page. Plain file
