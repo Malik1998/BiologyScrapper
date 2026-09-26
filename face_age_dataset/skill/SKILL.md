@@ -26,8 +26,10 @@ description: Собирает датасет лиц «человек сейча�
 
 ## Порядок работы
 
-Проект (код, модели, датасет) лежит в `~/Downloads/current project/biology` — все команды
-запускать из его корня (путь с пробелом — брать в кавычки). Окружение уже настроено.
+Проект (код, модели, датасет) лежит в `~/Downloads/current project/biology/Scrapping/face_age_dataset`
+(репозиторий BiologyScrapper) — все команды запускать из этой папки (путь с пробелом —
+брать в кавычки). Окружение в `.venv` этой папки, создаётся `./setup.sh`; команды ниже
+запускать через `.venv/bin/python`.
 
 ```bash
 python3 tools/harvest_all.py "Имя" ...   # или без имён -> seed_people.json
