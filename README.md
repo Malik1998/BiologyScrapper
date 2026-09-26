@@ -295,49 +295,21 @@ agree (inter-rater reliability) before committing to FLR as our rubric. This
 section covers that flow end to end - see `web/annotate_data.py` for the
 implementation notes this summarizes.
 
-### 1. Sample a batch from KinFaceW
+### 1. The batch (already built)
 
-```bash
-.venv/bin/python -m scripts.build_kinface_ii_age_batch
-```
+The batch everyone annotates is already built: 50 parent-child pairs from
+[KinFaceW-II](https://www.kinfacew.com/download.html), stratified by the
+child's estimated age, copied into `data/kinface_photos/<relation>/...jpg`
+(KinFaceW's own filenames, so parent/child pairing stays recoverable), with
+the fixed, ordered list of those 100 photos in `data/annotations/batch.json`
+(one entry per individual photo - FLR is scored per photo).
 
-This is `scripts/build_kinface_ii_age_batch.py`. What it does:
-
-1. Reads the public [KinFaceW-II](https://www.kinfacew.com/download.html)
-   dataset from `../KinFaceW-II` (one level above this repo - override with
-   `--source`). KinFaceW-II only, not KinFaceW-I - see below for why.
-   KinFaceW stores each parent-child pair as two files,
-   `<code>_<pair_index>_1.jpg` (parent) and `..._2.jpg` (child), inside one
-   folder per relation: `father-dau`, `father-son`, `mother-dau`, `mother-son`.
-2. Reads child ages from
-   `../kinface_age_estimation/results/kinfacew_children_age_estimation.csv`
-   (a DeepFace age-estimation pass over just the child photo of each pair -
-   see `kinface_age_estimation/run_age_estimation.py` - this is why only
-   KinFaceW-II is in scope here: that's the dataset the csv covers).
-   **Parents have no estimated age** - DeepFace was only run on the child
-   photos. Age is only used to pick a balanced sample; it isn't stored in
-   `batch.json` or shown anywhere in the annotation UI.
-3. Samples `--count` pairs (default **50**) stratified evenly across the
-   child's estimated age: pairs are grouped by integer age, then picked
-   round-robin youngest-to-oldest so every age bucket contributes 1-2 pairs
-   (capped by how many that age actually has) instead of the sample being
-   dominated by the most common ages. `--seed` (default 42) makes it
-   reproducible.
-4. Copies just the sampled pairs into `data/kinface_photos/<relation>/...jpg`,
-   preserving KinFaceW's own filenames/layout (so parent/child pairing is
-   still recoverable later, e.g. for the Step 4 pilot).
-5. Writes `data/annotations/batch.json`: the fixed, ordered list of those 100
-   photos (one entry per *individual photo*, not per pair - FLR is scored per
-   photo). This file **is the batch everyone annotates** - re-running the script without
-   `--force` refuses to overwrite it, since reshuffling it after people have
-   started would break the "same batch" guarantee. If you do need to
-   resample, archive `data/annotations/{responses,raters.json,batch.json}`
-   first (see `data/annotations/archive/` for an example) so nobody's
-   completed work is silently invalidated - `--force` only overwrites
-   `batch.json`, it won't do that archiving for you.
-
-The older `scripts/build_kinface_batch.py` (KinFaceW-I, unstratified) still
-works the same way if you ever want a plain random sample instead.
+The scripts that built it (`scripts/build_kinface_batch.py`,
+`scripts/build_kinface_ii_age_batch.py`) and the DeepFace child-age pass they
+relied on (`kinface_age_estimation/`) were removed; recover them from git
+history (commit `964cf98`) if the batch ever has to be resampled. Don't
+change `batch.json` once people have started - archive
+`data/annotations/{responses,raters.json,batch.json}` first.
 
 `data/` (including `data/kinface_photos` and `data/annotations`) is
 gitignored, consistent with KinFaceW's non-redistribution terms of use -
@@ -408,5 +380,3 @@ just edit that file. No changes needed in `web/app.py` or `annotate.js`.
 Каждый запускается из своей папки и имеет свой `requirements.txt`.
 
 - `face_age_dataset/` — датасет лиц «сейчас 40-50 / молодой 20-30 / родители 40-50» с Wikimedia Commons, см. его README.
-- `vlm_analyzer/` — анализ возрастных изменений на FGNET через VLM (OpenRouter). Ключ в `OPENROUTER_API_KEY`, данные через `--data-root`.
-- `kinface_age_estimation/` — оценка возраста детей из KinFaceW-I/II (deepface), данные через `--data-root`.

@@ -3,10 +3,10 @@
 Storage layout (all under data/, gitignored - see web/data_access.py for the
 sibling module this mirrors):
 
-    data/kinface_photos/<relation>/<pair>_<1|2>.jpg   - copied by
-        scripts/build_kinface_batch.py, same layout KinFaceW itself uses.
+    data/kinface_photos/<relation>/<pair>_<1|2>.jpg   - sampled pairs
+        from KinFaceW-II, same layout KinFaceW itself uses.
     data/annotations/batch.json                       - fixed, ordered list
-        of individual photos every rater works through (see build_kinface_batch.py).
+        of individual photos every rater works through.
     data/annotations/raters.json                       - slug -> display name.
     data/annotations/responses/<rater_slug>/<image_id with "/" -> "__">.json
         - one file per (rater, photo): scores + comment + timestamp.
@@ -52,8 +52,8 @@ def load_schema() -> dict:
 def load_batch() -> dict:
     if not BATCH_PATH.exists():
         raise BatchNotBuilt(
-            "No batch yet - run `.venv/bin/python -m scripts.build_kinface_ii_age_batch` "
-            "(or scripts.build_kinface_batch) first."
+            "No batch yet - data/annotations/batch.json is missing (the build "
+            "scripts were removed; restore them from git history, commit 964cf98)."
         )
     return json.loads(BATCH_PATH.read_text())
 
