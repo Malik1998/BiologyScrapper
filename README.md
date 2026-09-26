@@ -402,3 +402,11 @@ scored field (e.g. once we know which FLR signs actually survive as
 reliably-scoreable, per the "modified real-world-photo rubric" discussion),
 just edit that file. No changes needed in `web/app.py` or `annotate.js`.
 # BiologyScrapper
+
+## Соседние подпроекты
+
+Каждый запускается из своей папки и имеет свой `requirements.txt`.
+
+- `face_age_dataset/` — датасет лиц «сейчас 40-50 / молодой 20-30 / родители 40-50» с Wikimedia Commons, см. его README.
+- `vlm_analyzer/` — анализ возрастных изменений на FGNET через VLM (OpenRouter). Ключ в `OPENROUTER_API_KEY`, данные через `--data-root`.
+- `kinface_age_estimation/` — оценка возраста детей из KinFaceW-I/II (deepface), данные через `--data-root`.

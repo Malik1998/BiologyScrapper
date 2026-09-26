@@ -4,3 +4,12 @@ state/
 __pycache__/
 *.pyc
 .venv/
+
+# data produced by the subprojects: kept on disk, not in git
+face_age_dataset/dataset/
+face_age_dataset/work/
+face_age_dataset/models/
+face_age_dataset/.transfer-stage/
+vlm_analyzer/runs/
+kinface_age_estimation/results/
+.DS_Store

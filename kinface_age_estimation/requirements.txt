@@ -1,0 +1,5 @@
+deepface
+tensorflow
+tf-keras
+pandas
+tqdm
