@@ -13,20 +13,47 @@ import urllib.request
 from datetime import date
 
 API = "https://commons.wikimedia.org/w/api.php"
-UA = "faces-dataset/0.1 (research dataset build; python-urllib)"
+UA = "faces-dataset/0.2 (https://github.com/Malik1998/BiologyScrapper; research dataset build)"
+
+import threading
 
 _last_call = [0.0]
+_api_lock = threading.Lock()
 MIN_GAP = 1.1  # Commons is strict; stay well under its limit
+# Backoff after 429/503. If Commons still refuses, RateLimited is raised and
+# harvest_all puts the person at the back of the queue instead of blocking a
+# worker for minutes -- and never records the refusal as "no photos".
+BACKOFF = (10, 30, 60)
+
+
+class RateLimited(RuntimeError):
+    """Commons kept refusing. Never to be read as 'nothing there'."""
+
+
+def _retry_after(e, attempt):
+    try:
+        ra = float(e.headers.get("Retry-After"))
+        return min(max(ra, BACKOFF[attempt]), 300)
+    except Exception:
+        return BACKOFF[attempt]
+
+
+def _wait_turn(last, lock, gap_s):
+    # the lock makes the gap real across threads; without it N workers
+    # all saw the same stale timestamp and fired together
+    with lock:
+        gap = time.time() - last[0]
+        if gap < gap_s:
+            time.sleep(gap_s - gap)
+        last[0] = time.time()
 
 
 def api(**params):
     params.setdefault("format", "json")
     params.setdefault("formatversion", "2")
     body = urllib.parse.urlencode(params).encode()
-    for attempt in range(6):
-        gap = time.time() - _last_call[0]
-        if gap < MIN_GAP:
-            time.sleep(MIN_GAP - gap)
+    for attempt in range(len(BACKOFF) + 1):
+        _wait_turn(_last_call, _api_lock, MIN_GAP)
         req = urllib.request.Request(
             API, data=body,
             headers={"User-Agent": UA,
@@ -34,23 +61,73 @@ def api(**params):
                      "Accept-Encoding": "gzip"})
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
-                _last_call[0] = time.time()
                 raw = r.read()
                 if r.headers.get("Content-Encoding") == "gzip":
                     import gzip
                     raw = gzip.decompress(raw)
                 return json.loads(raw)
         except urllib.error.HTTPError as e:
-            _last_call[0] = time.time()
-            if e.code in (429, 503) and attempt < 5:
-                time.sleep(5 * (attempt + 1))
+            if e.code in (429, 503):
+                if attempt == len(BACKOFF):
+                    raise RateLimited(f"Commons API {e.code} after {attempt} retries")
+                time.sleep(_retry_after(e, attempt))
                 continue
             raise
         except Exception:
-            _last_call[0] = time.time()
-            if attempt == 5:
+            if attempt >= 5:
                 raise
             time.sleep(3 * (attempt + 1))
+
+
+_last_dl = [0.0]
+_dl_lock = threading.Lock()
+DL_GAP = 0.5
+
+
+def download(url, dest, min_bytes=3000):
+    """Fetch an image from Commons/upload.wikimedia with the shared throttle.
+
+    Returns False only when the file itself is unusable (404, tiny body).
+    Rate limiting raises RateLimited instead: a silent False here once turned
+    11 found photos of Donald Trump Jr. into 0 scored ones.
+    """
+    for attempt in range(len(BACKOFF) + 1):
+        _wait_turn(_last_dl, _dl_lock, DL_GAP)
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=90) as r:
+                data = r.read()
+            if len(data) < min_bytes:
+                return False
+            with open(dest, "wb") as f:
+                f.write(data)
+            return True
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and "?width=" in url:
+                try:
+                    body = e.read().decode("utf-8", "replace")
+                except Exception:
+                    body = ""
+                if "GHai" in body or "thumbnail" in body.lower():
+                    # a policy refusal of this thumbnail size, not throttling:
+                    # waiting will not help, the original will
+                    url = url.split("?width=")[0]
+                    continue
+            if e.code in (429, 503):
+                if attempt == len(BACKOFF):
+                    raise RateLimited(f"download {e.code} after {attempt} retries: {url}")
+                time.sleep(_retry_after(e, attempt))
+                continue
+            if e.code in (404, 410, 400):
+                return False
+            if attempt >= 3:
+                return False
+            time.sleep(3 * (attempt + 1))
+        except Exception:
+            if attempt >= 3:
+                return False
+            time.sleep(3 * (attempt + 1))
+    return False
 
 
 def category_files(category, depth=1, limit=1200):
@@ -193,8 +270,9 @@ def harvest(category, birth, age_lo, age_hi, depth=1, min_px=600):
         if min(w, h) < min_px:
             continue
         em = ii.get("extmetadata", {})
-        raw = (em.get("DateTimeOriginal", {}) or {}).get("value") or \
-              (em.get("DateTime", {}) or {}).get("value")
+        # only DateTimeOriginal: "DateTime" is when the file was last
+        # modified/uploaded, which dated a Kim Kardashian photo to 2026
+        raw = (em.get("DateTimeOriginal", {}) or {}).get("value")
         parsed, dsrc, conflict = resolve_date(em, t, raw)
         if not parsed:
             continue

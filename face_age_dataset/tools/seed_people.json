@@ -1,36 +1,788 @@
 {
-  "_note": "Curated seed used when the Wikidata query service is unavailable. Selection rule is not fame of the subject but photographability of the PARENTS: a subject is only usable here if their father or mother was photographed while aged 40-50. Parents, birth dates and Commons categories are still resolved automatically from Wikidata at build time.",
-  "_verify": "Ages are computed from Wikidata birth dates at build time, not from this file. Years in comments are indicative only.",
-  "people": [
-    {"name": "Chelsea Clinton",    "why": "Bill + Hillary Clinton, White House era, public domain"},
-    {"name": "Ivanka Trump",       "why": "Donald + Ivana Trump, heavy 1986-1999 coverage"},
-    {"name": "Prince William",     "why": "Charles III; Diana died at 36 so mother slot must fail honestly"},
-    {"name": "Kate Hudson",        "why": "Goldie Hawn + Bill Hudson"},
-    {"name": "Prince Harry",       "why": "Charles III; same Diana limitation"},
-    {"name": "Angelina Jolie",     "why": "Jon Voight + Marcheline Bertrand"},
-    {"name": "Colin Hanks",        "why": "Tom Hanks at 40-50 is 1996-2006"},
-    {"name": "Jake Gyllenhaal",    "why": "Stephen Gyllenhaal + Naomi Foner"},
-    {"name": "Maggie Gyllenhaal",  "why": "same parents, sibling cross-check"},
-    {"name": "Rashida Jones",      "why": "Quincy Jones + Peggy Lipton"},
-    {"name": "Liv Tyler",          "why": "Steven Tyler + Bebe Buell"},
-    {"name": "Bryce Dallas Howard","why": "Ron Howard"},
-    {"name": "Abhishek Bachchan",  "why": "Amitabh + Jaya Bachchan, strong Commons coverage"},
-    {"name": "Ranbir Kapoor",      "why": "Rishi Kapoor + Neetu Singh"},
-    {"name": "Kareena Kapoor",     "why": "Randhir Kapoor + Babita"},
-    {"name": "Sean Lennon",        "why": "John Lennon died at 40 + Yoko Ono"},
-    {"name": "Dhani Harrison",     "why": "George Harrison"},
-    {"name": "Norah Jones",        "why": "Ravi Shankar"},
-    {"name": "Kelly Osbourne",     "why": "Ozzy + Sharon Osbourne"},
-    {"name": "Jack Osbourne",      "why": "Ozzy + Sharon Osbourne"},
-    {"name": "Paris Hilton",       "why": "Rick + Kathy Hilton"},
-    {"name": "Scott Eastwood",     "why": "Clint Eastwood at 40-50 is 1970-1980"},
-    {"name": "Cameron Douglas",    "why": "Michael Douglas + Diandra Luker"},
-    {"name": "Jason Ritter",       "why": "John Ritter"},
-    {"name": "Lily Allen",         "why": "Keith Allen"},
-    {"name": "Charlotte Casiraghi","why": "Caroline of Monaco, Stefano Casiraghi"},
-    {"name": "Stella McCartney",   "why": "Paul McCartney + Linda McCartney"},
-    {"name": "Sofia Coppola",      "why": "Francis Ford Coppola"},
-    {"name": "Hrithik Roshan",     "why": "Rakesh Roshan"},
-    {"name": "Sonam Kapoor",       "why": "Anil Kapoor"}
-  ]
+ "_note": "Curated seed used when the Wikidata query service is unavailable. Selection rule is not fame of the subject but photographability of the PARENTS: a subject is only usable here if their father or mother was photographed while aged 40-50. Parents, birth dates and Commons categories are still resolved automatically from Wikidata at build time.",
+ "_verify": "Ages are computed from Wikidata birth dates at build time, not from this file. Years in comments are indicative only.",
+ "people": [
+  {
+   "name": "Chelsea Clinton",
+   "why": "Bill + Hillary Clinton, White House era, public domain",
+   "batch": 1
+  },
+  {
+   "name": "Ivanka Trump",
+   "why": "Donald + Ivana Trump, heavy 1986-1999 coverage",
+   "batch": 1
+  },
+  {
+   "name": "Prince William",
+   "why": "Charles III; Diana died at 36 so mother slot must fail honestly",
+   "batch": 1
+  },
+  {
+   "name": "Kate Hudson",
+   "why": "Goldie Hawn + Bill Hudson",
+   "batch": 1
+  },
+  {
+   "name": "Prince Harry",
+   "why": "Charles III; same Diana limitation",
+   "batch": 1
+  },
+  {
+   "name": "Angelina Jolie",
+   "why": "Jon Voight + Marcheline Bertrand",
+   "batch": 1
+  },
+  {
+   "name": "Colin Hanks",
+   "why": "Tom Hanks at 40-50 is 1996-2006",
+   "batch": 1
+  },
+  {
+   "name": "Jake Gyllenhaal",
+   "why": "Stephen Gyllenhaal + Naomi Foner",
+   "batch": 1
+  },
+  {
+   "name": "Maggie Gyllenhaal",
+   "why": "same parents, sibling cross-check",
+   "batch": 1
+  },
+  {
+   "name": "Rashida Jones",
+   "why": "Quincy Jones + Peggy Lipton",
+   "batch": 1
+  },
+  {
+   "name": "Liv Tyler",
+   "why": "Steven Tyler + Bebe Buell",
+   "batch": 1
+  },
+  {
+   "name": "Bryce Dallas Howard",
+   "why": "Ron Howard",
+   "batch": 1
+  },
+  {
+   "name": "Abhishek Bachchan",
+   "why": "Amitabh + Jaya Bachchan, strong Commons coverage",
+   "batch": 1
+  },
+  {
+   "name": "Ranbir Kapoor",
+   "why": "Rishi Kapoor + Neetu Singh",
+   "batch": 1
+  },
+  {
+   "name": "Kareena Kapoor",
+   "why": "Randhir Kapoor + Babita",
+   "batch": 1
+  },
+  {
+   "name": "Sean Lennon",
+   "why": "John Lennon died at 40 + Yoko Ono",
+   "batch": 1
+  },
+  {
+   "name": "Dhani Harrison",
+   "why": "George Harrison",
+   "batch": 1
+  },
+  {
+   "name": "Norah Jones",
+   "why": "Ravi Shankar",
+   "batch": 1
+  },
+  {
+   "name": "Kelly Osbourne",
+   "why": "Ozzy + Sharon Osbourne",
+   "batch": 1
+  },
+  {
+   "name": "Jack Osbourne",
+   "why": "Ozzy + Sharon Osbourne",
+   "batch": 1
+  },
+  {
+   "name": "Paris Hilton",
+   "why": "Rick + Kathy Hilton",
+   "batch": 1
+  },
+  {
+   "name": "Scott Eastwood",
+   "why": "Clint Eastwood at 40-50 is 1970-1980",
+   "batch": 1
+  },
+  {
+   "name": "Cameron Douglas",
+   "why": "Michael Douglas + Diandra Luker",
+   "batch": 1,
+   "qid": "Q1028724"
+  },
+  {
+   "name": "Jason Ritter",
+   "why": "John Ritter",
+   "batch": 1
+  },
+  {
+   "name": "Lily Allen",
+   "why": "Keith Allen",
+   "batch": 1
+  },
+  {
+   "name": "Charlotte Casiraghi",
+   "why": "Caroline of Monaco, Stefano Casiraghi",
+   "batch": 1
+  },
+  {
+   "name": "Stella McCartney",
+   "why": "Paul McCartney + Linda McCartney",
+   "batch": 1
+  },
+  {
+   "name": "Sofia Coppola",
+   "why": "Francis Ford Coppola",
+   "batch": 1
+  },
+  {
+   "name": "Hrithik Roshan",
+   "why": "Rakesh Roshan",
+   "batch": 1
+  },
+  {
+   "name": "Sonam Kapoor",
+   "why": "Anil Kapoor",
+   "batch": 1
+  },
+  {
+   "name": "Jenna Bush Hager",
+   "why": "George W. Bush (1946) + Laura Bush (1946)",
+   "batch": 2
+  },
+  {
+   "name": "Barbara Pierce Bush",
+   "why": "George W. Bush (1946) + Laura Bush (1946)",
+   "batch": 2,
+   "qid": "Q153730"
+  },
+  {
+   "name": "Donald Trump Jr.",
+   "why": "Donald Trump (1946) + Ivana Trump (1949)",
+   "batch": 2
+  },
+  {
+   "name": "Eric Trump",
+   "why": "Donald Trump (1946) + Ivana Trump (1949)",
+   "batch": 2
+  },
+  {
+   "name": "Meghan McCain",
+   "why": "John McCain (1936) + Cindy McCain (1954)",
+   "batch": 2
+  },
+  {
+   "name": "Joseph P. Kennedy III",
+   "why": "Joseph P. Kennedy II (1952), congressman 1987-99",
+   "batch": 2
+  },
+  {
+   "name": "Kristin Gore",
+   "why": "Al Gore (1948) + Tipper Gore (1948), VP era 1993-2001",
+   "batch": 2
+  },
+  {
+   "name": "Ben Quayle",
+   "why": "Dan Quayle (1947) + Marilyn Quayle (1949), VP era 1989-93",
+   "batch": 2
+  },
+  {
+   "name": "Vanessa Kerry",
+   "why": "John Kerry (1943)",
+   "batch": 2
+  },
+  {
+   "name": "Ashley Biden",
+   "why": "Joe Biden (1942) + Jill Biden (1951)",
+   "batch": 2
+  },
+  {
+   "name": "Euan Blair",
+   "why": "Tony Blair (1953) + Cherie Blair (1954), PM era 1997-2007",
+   "batch": 2
+  },
+  {
+   "name": "Jean Sarkozy",
+   "why": "Nicolas Sarkozy (1955)",
+   "batch": 2
+  },
+  {
+   "name": "Ben Mulroney",
+   "why": "Brian Mulroney (1939) + Mila Mulroney (1953)",
+   "batch": 2
+  },
+  {
+   "name": "Ksenia Sobchak",
+   "why": "Anatoly Sobchak (1937) + Lyudmila Narusova (1951)",
+   "batch": 2
+  },
+  {
+   "name": "Eduardo Bolsonaro",
+   "why": "Jair Bolsonaro (1955)",
+   "batch": 2
+  },
+  {
+   "name": "Flávio Bolsonaro",
+   "why": "Jair Bolsonaro (1955)",
+   "batch": 2
+  },
+  {
+   "name": "Zara Tindall",
+   "why": "Princess Anne (1950) + Mark Phillips (1948)",
+   "batch": 2
+  },
+  {
+   "name": "Peter Phillips",
+   "why": "Princess Anne (1950) + Mark Phillips (1948)",
+   "batch": 2
+  },
+  {
+   "name": "Victoria, Crown Princess of Sweden",
+   "why": "Carl XVI Gustaf (1946) + Queen Silvia (1943)",
+   "batch": 2
+  },
+  {
+   "name": "Prince Carl Philip, Duke of Värmland",
+   "why": "Carl XVI Gustaf (1946) + Queen Silvia (1943)",
+   "batch": 2
+  },
+  {
+   "name": "Princess Madeleine, Duchess of Hälsingland and Gästrikland",
+   "why": "Carl XVI Gustaf (1946) + Queen Silvia (1943)",
+   "batch": 2
+  },
+  {
+   "name": "Guillaume, Hereditary Grand Duke of Luxembourg",
+   "why": "Grand Duke Henri (1955) + Maria Teresa (1956)",
+   "batch": 2
+  },
+  {
+   "name": "Prince Félix of Luxembourg",
+   "why": "Grand Duke Henri (1955) + Maria Teresa (1956)",
+   "batch": 2
+  },
+  {
+   "name": "Andrea Casiraghi",
+   "why": "Caroline of Monaco (1957)",
+   "batch": 2
+  },
+  {
+   "name": "Prince Amedeo of Belgium",
+   "why": "Princess Astrid (1962) + Lorenz (1955)",
+   "batch": 2
+  },
+  {
+   "name": "Nicole Richie",
+   "why": "Lionel Richie (1949)",
+   "batch": 2
+  },
+  {
+   "name": "Kimberly Stewart",
+   "why": "Rod Stewart (1945) + Alana Stewart (1945)",
+   "batch": 2
+  },
+  {
+   "name": "Nicky Hilton",
+   "why": "Kathy Hilton (1959) + Richard Hilton (1955)",
+   "batch": 2
+  },
+  {
+   "name": "Kim Kardashian",
+   "why": "Kris Jenner (1955) + Robert Kardashian (1944)",
+   "batch": 2
+  },
+  {
+   "name": "Kourtney Kardashian",
+   "why": "Kris Jenner (1955) + Robert Kardashian (1944)",
+   "batch": 2
+  },
+  {
+   "name": "Khloé Kardashian",
+   "why": "Kris Jenner (1955) + Robert Kardashian (1944)",
+   "batch": 2
+  },
+  {
+   "name": "Mamie Gummer",
+   "why": "Meryl Streep (1949)",
+   "batch": 2
+  },
+  {
+   "name": "Max Irons",
+   "why": "Jeremy Irons (1948) + Sinéad Cusack (1948)",
+   "batch": 2
+  },
+  {
+   "name": "Chris Pine",
+   "why": "Robert Pine (1941) + Gwynne Gilford (1946)",
+   "batch": 2
+  },
+  {
+   "name": "Jason Schwartzman",
+   "why": "Talia Shire (1946)",
+   "batch": 2
+  },
+  {
+   "name": "Oliver Hudson",
+   "why": "Goldie Hawn (1945) + Bill Hudson (1949)",
+   "batch": 2
+  },
+  {
+   "name": "Elizabeth Jagger",
+   "why": "Mick Jagger (1943) + Jerry Hall (1956)",
+   "batch": 2
+  },
+  {
+   "name": "Theodora Richards",
+   "why": "Keith Richards (1943) + Patti Hansen (1956)",
+   "batch": 2
+  },
+  {
+   "name": "Ben Taylor",
+   "why": "James Taylor (1948) + Carly Simon (1945)",
+   "batch": 2
+  },
+  {
+   "name": "Martha Wainwright",
+   "why": "Loudon Wainwright III (1946) + Kate McGarrigle (1946)",
+   "batch": 2
+  },
+  {
+   "name": "Lou Doillon",
+   "why": "Jane Birkin (1946)",
+   "batch": 2
+  },
+  {
+   "name": "Esha Deol",
+   "why": "Hema Malini (1948) + Dharmendra (1935)",
+   "batch": 2
+  },
+  {
+   "name": "Shruti Haasan",
+   "why": "Kamal Haasan (1954) + Sarika (1960)",
+   "batch": 2
+  },
+  {
+   "name": "Soha Ali Khan",
+   "why": "Sharmila Tagore (1944) + Mansoor Ali Khan Pataudi (1941)",
+   "batch": 2
+  },
+  {
+   "name": "Riteish Deshmukh",
+   "why": "Vilasrao Deshmukh (1945)",
+   "batch": 2
+  },
+  {
+   "name": "Ram Charan",
+   "why": "Chiranjeevi (1955)",
+   "batch": 2
+  },
+  {
+   "name": "Dulquer Salmaan",
+   "why": "Mammootty (1951)",
+   "batch": 2
+  },
+  {
+   "name": "Arjun Kapoor",
+   "why": "Boney Kapoor (1953)",
+   "batch": 2
+  },
+  {
+   "name": "Nico Rosberg",
+   "why": "Keke Rosberg (1948)",
+   "batch": 2
+  },
+  {
+   "name": "Nelson Piquet Jr.",
+   "why": "Nelson Piquet (1952)",
+   "batch": 2
+  },
+  {
+   "name": "Kasper Schmeichel",
+   "why": "Peter Schmeichel (1963)",
+   "batch": 2
+  },
+  {
+   "name": "Eli Manning",
+   "why": "Archie Manning (1949)",
+   "batch": 2
+  },
+  {
+   "name": "Peyton Manning",
+   "why": "Archie Manning (1949)",
+   "batch": 2
+  },
+  {
+   "name": "Prince Fielder",
+   "why": "Cecil Fielder (1963)",
+   "batch": 2
+  },
+  {
+   "name": "James McCartney",
+   "why": "Paul McCartney (1942) + Linda McCartney (1941)",
+   "batch": 2,
+   "qid": "Q498390"
+  },
+  {
+   "name": "Lady Gabriella Windsor",
+   "why": "Prince Michael of Kent (1942) + Princess Michael (1945)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Lord Frederick Windsor",
+   "why": "Prince Michael of Kent (1942) + Princess Michael (1945)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Lady Davina Lewis",
+   "why": "Duke (1944) + Duchess of Gloucester (1946)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Laura Lopes",
+   "why": "Queen Camilla (1947) + Andrew Parker Bowles (1939)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Catherine, Princess of Wales",
+   "why": "Michael (1949) + Carole Middleton (1955)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Pippa Middleton",
+   "why": "Michael (1949) + Carole Middleton (1955)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Leah Wood",
+   "why": "Ronnie Wood (1947) + Jo Wood (1955)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Otis Ferry",
+   "why": "Bryan Ferry (1945) + Lucy Helmore (1955)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Ben Goldsmith",
+   "why": "James Goldsmith (1933) + Lady Annabel Goldsmith (1934)",
+   "batch": 3,
+   "country": "UK"
+  },
+  {
+   "name": "Nicky Blair",
+   "why": "Tony Blair (1953) + Cherie Blair (1954)",
+   "batch": 3,
+   "country": "UK",
+   "qid": "Q122153044",
+   "father_qid": "Q9545",
+   "mother_qid": "Q174214"
+  },
+  {
+   "name": "Alexander Skarsgård",
+   "why": "Stellan Skarsgård (1951)",
+   "batch": 3,
+   "country": "Sweden"
+  },
+  {
+   "name": "Gustaf Skarsgård",
+   "why": "Stellan Skarsgård (1951)",
+   "batch": 3,
+   "country": "Sweden"
+  },
+  {
+   "name": "Noomi Rapace",
+   "why": "Nina Norén (1954) + Rogelio Durán (1953)",
+   "batch": 3,
+   "country": "Sweden"
+  },
+  {
+   "name": "Ludvig Andersson",
+   "why": "Benny Andersson (1946)",
+   "batch": 3,
+   "country": "Sweden"
+  },
+  {
+   "name": "Christian Ulvaeus",
+   "why": "Björn Ulvaeus (1945) + Agnetha Fältskog (1950)",
+   "batch": 3,
+   "country": "Sweden"
+  },
+  {
+   "name": "Robin Borg",
+   "why": "Björn Borg (1956)",
+   "batch": 3,
+   "country": "Sweden"
+  },
+  {
+   "name": "Tuva Novotny",
+   "why": "parents Swedish/Czech actors",
+   "batch": 3,
+   "country": "Sweden"
+  },
+  {
+   "name": "Cosma Shiva Hagen",
+   "why": "Nina Hagen (1955)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Benjamin Tewaag",
+   "why": "Uschi Glas (1944)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Katharina Wagner",
+   "why": "Wolfgang Wagner (1919) + Gudrun Wagner (1944)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Ernst August, Hereditary Prince of Hanover",
+   "why": "Ernst August of Hanover (1954)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Prince Christian of Hanover",
+   "why": "Ernst August of Hanover (1954)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Anna Maria Mühe",
+   "why": "Ulrich Mühe (1953) + Jenny Gröllmann (1947)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Hannah Herzsprung",
+   "why": "Bernd Herzsprung (1942)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Albert, 12th Prince of Thurn and Taxis",
+   "why": "Gloria von Thurn und Taxis (1960)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Elisabeth von Thurn und Taxis",
+   "why": "Gloria von Thurn und Taxis (1960)",
+   "batch": 3,
+   "country": "Germany"
+  },
+  {
+   "name": "Matthew Newton",
+   "why": "Bert Newton (1938) + Patti Newton (1945)",
+   "batch": 3,
+   "country": "Australia"
+  },
+  {
+   "name": "Mahalia Barnes",
+   "why": "Jimmy Barnes (1956)",
+   "batch": 3,
+   "country": "Australia"
+  },
+  {
+   "name": "Jackie Barnes",
+   "why": "Jimmy Barnes (1956)",
+   "batch": 3,
+   "country": "Australia"
+  },
+  {
+   "name": "Chloe Lattanzi",
+   "why": "Olivia Newton-John (1948) + Matt Lattanzi (1959)",
+   "batch": 3,
+   "country": "Australia"
+  },
+  {
+   "name": "Hamdan bin Mohammed Al Maktoum",
+   "why": "Mohammed bin Rashid Al Maktoum (1949)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Maktoum bin Mohammed Al Maktoum",
+   "why": "Mohammed bin Rashid Al Maktoum (1949)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Tamim bin Hamad Al Thani",
+   "why": "Hamad bin Khalifa (1952) + Moza bint Nasser (1959)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Joaan bin Hamad Al Thani",
+   "why": "Hamad bin Khalifa (1952) + Moza bint Nasser (1959)",
+   "batch": 3,
+   "country": "Arab",
+   "qid": "Q6204478"
+  },
+  {
+   "name": "Mohammed bin Salman",
+   "why": "King Salman (1935)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Prince Hamzah bin Hussein",
+   "why": "King Hussein (1935) + Queen Noor (1951)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Prince Hashim bin Hussein",
+   "why": "King Hussein (1935) + Queen Noor (1951)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Princess Raiyah bint Hussein",
+   "why": "King Hussein (1935) + Queen Noor (1951)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Khaled bin Mohamed Al Nahyan",
+   "why": "Mohamed bin Zayed (1961)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Ayman Hariri",
+   "why": "Rafic Hariri (1944)",
+   "batch": 3,
+   "country": "Arab"
+  },
+  {
+   "name": "Menna Shalabi",
+   "why": "Zizi Mustafa",
+   "batch": 3,
+   "country": "Egypt"
+  },
+  {
+   "name": "Donia Samir Ghanem",
+   "why": "Samir Ghanem (1937) + Dalal Abdel Aziz (1960)",
+   "batch": 3,
+   "country": "Egypt"
+  },
+  {
+   "name": "Ahmed El-Fishawy",
+   "why": "Farouk El-Fishawy (1952) + Somaya El-Alfy (1953)",
+   "batch": 3,
+   "country": "Egypt"
+  },
+  {
+   "name": "Nadezhda Mikhalkova",
+   "why": "Nikita Mikhalkov (1945) + Tatyana Mikhalkova (1947)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Ivan Urgant",
+   "why": "Andrei Urgant (1956)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Konstantin Kryukov",
+   "why": "Natalya Bondarchuk (1950)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Stas Piekha",
+   "why": "Ilona Bronevitskaya (1961)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Maria Gaidar",
+   "why": "Yegor Gaidar (1956)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Yulia Shoigu",
+   "why": "Sergei Shoigu (1955)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Dmitry Patrushev",
+   "why": "Nikolai Patrushev (1951)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Pavel Fradkov",
+   "why": "Mikhail Fradkov (1950)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Daria Moroz",
+   "why": "Yuri Moroz (1956) + Marina Levtova (1959)",
+   "batch": 3,
+   "country": "Russia"
+  },
+  {
+   "name": "Jason Reitman",
+   "why": "Ivan Reitman (1946)",
+   "batch": 3,
+   "country": "Canada"
+  },
+  {
+   "name": "Catherine Reitman",
+   "why": "Ivan Reitman (1946)",
+   "batch": 3,
+   "country": "Canada"
+  },
+  {
+   "name": "Rossif Sutherland",
+   "why": "Donald Sutherland (1935) + Francine Racette (1947)",
+   "batch": 3,
+   "country": "Canada"
+  },
+  {
+   "name": "Angus Sutherland",
+   "why": "Donald Sutherland (1935) + Francine Racette (1947)",
+   "batch": 3,
+   "country": "Canada"
+  },
+  {
+   "name": "Dan Levy",
+   "why": "Eugene Levy (1946)",
+   "batch": 3,
+   "country": "Canada",
+   "qid": "Q5217926"
+  },
+  {
+   "name": "Haitham Ahmed Zaki",
+   "why": "Ahmed Zaki (1949) + Hala Fouad (1958)",
+   "batch": 3,
+   "country": "Egypt"
+  }
+ ],
+ "_note_batch2": "Batch 2 is picked parent-first: parents born ~1935-1963 (63-90 now), so their 40-50 window falls in ~1985-2013, with the child now 40-50."
 }

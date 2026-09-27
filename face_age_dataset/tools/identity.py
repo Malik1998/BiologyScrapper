@@ -14,7 +14,7 @@ import urllib.request
 import cv2
 import numpy as np
 
-UA = "faces-dataset/0.1 (research dataset build)"
+UA = "faces-dataset/0.2 (https://github.com/Malik1998/BiologyScrapper; research dataset build)"
 SFACE = os.path.join(os.path.dirname(__file__), "..", "models", "sface.onnx")
 # OpenCV's documented same-identity cosine threshold for SFace
 SAME_ID = 0.363
@@ -37,9 +37,35 @@ _wd_last = [0.0]
 WD_GAP = 1.2
 
 
+WD_CACHE = os.path.join(os.path.dirname(__file__), "..", "work", "wd_cache")
+
+
 def wd_get(url):
-    """Throttled + retried: parallel workers otherwise trip Wikidata's 429."""
-    for attempt in range(5):
+    """Throttled, retried and cached on disk.
+
+    Every retry of a person used to look them and their parents up again, and
+    Wikidata answered with 429s long after Commons had calmed down. Entities
+    barely change, so one answer per URL is enough.
+    """
+    import hashlib
+    cp = os.path.join(WD_CACHE, hashlib.sha1(url.encode()).hexdigest() + ".json")
+    if os.path.exists(cp):
+        try:
+            return json.load(open(cp))
+        except Exception:
+            pass
+    data = _wd_fetch(url)
+    os.makedirs(WD_CACHE, exist_ok=True)
+    tmp = cp + f".{threading.get_ident()}.tmp"
+    json.dump(data, open(tmp, "w"))
+    os.replace(tmp, cp)
+    return data
+
+
+def _wd_fetch(url):
+    from commons import RateLimited
+    backoff = (10, 30, 60)
+    for attempt in range(len(backoff) + 1):
         with _wd_lock:
             gap = time.time() - _wd_last[0]
             if gap < WD_GAP:
@@ -50,12 +76,14 @@ def wd_get(url):
             with urllib.request.urlopen(req, timeout=45) as r:
                 return json.load(r)
         except urllib.error.HTTPError as e:
-            if e.code in (429, 503) and attempt < 4:
-                time.sleep(5 * (attempt + 1))
-                continue
+            if e.code in (429, 503):
+                if attempt < len(backoff):
+                    time.sleep(backoff[attempt])
+                    continue
+                raise RateLimited(f"Wikidata {e.code} after {attempt} retries")
             raise
         except Exception:
-            if attempt == 4:
+            if attempt >= 4:
                 raise
             time.sleep(3 * (attempt + 1))
 
@@ -76,27 +104,55 @@ def best_label(entity, fallback):
     return entity.get("labels", {}).get("en", {}).get("value") or fallback
 
 
-def wikidata_person(name):
+def _norm(t):
+    return " ".join(str(t or "").replace(",", " ").replace(".", " ").lower().split())
+
+
+def _match(e, want):
+    """2 = the item's own name, 1 = only an alias, 0 = neither.
+
+    Aliases alone are not enough: Paul McCartney carries the alias
+    "James McCartney", which is also his son's actual name.
+    """
+    own = {_norm(e.get("labels", {}).get("en", {}).get("value")),
+           _norm(e.get("sitelinks", {}).get("enwiki", {}).get("title"))}
+    if want in own:
+        return 2
+    if want in {_norm(a.get("value")) for a in e.get("aliases", {}).get("en", [])}:
+        return 1
+    return 0
+
+
+def wikidata_person(name, qid=None):
     """Resolve a name to a real, dated human -- not merely the first search hit.
 
     wbsearchentities ranks "Angelina Jolie" with a namesake item ahead of the
     actress, so taking hits[0] silently builds the dataset around the wrong
-    person. Score the top hits and keep the best-attested human instead.
+    person. Score the top hits and keep the best-attested human instead --
+    but an exact name/alias match outranks fame: fame alone turned
+    "James McCartney" into Paul and "Cameron Douglas" into Cameron Bright.
+    `qid` skips the search for names that stay ambiguous.
     """
+    if qid:
+        return _person_from_ids([qid], name)
     q = ("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json"
          "&language=en&type=item&limit=8&search=" + urllib.parse.quote(name))
     hits = wd_get(q).get("search", [])
     if not hits:
         return None
 
-    ids = [h["id"] for h in hits[:6]]
+    return _person_from_ids([h["id"] for h in hits[:6]], name)
+
+
+def _person_from_ids(ids, name):
     # one batched call instead of six: checking candidates individually was
     # enough extra Wikidata load to start tripping 429 under parallel workers
     bulk = wd_get("https://www.wikidata.org/w/api.php?action=wbgetentities"
-                  "&format=json&props=claims%7Csitelinks%7Clabels&languages=en"
+                  "&format=json&props=claims%7Csitelinks%7Clabels%7Caliases&languages=en"
                   "&ids=" + urllib.parse.quote("|".join(ids)))
     ents = bulk.get("entities", {})
 
+    want = _norm(name)
     best, best_key, qid_best = None, None, None
     for qid_c in ids:
         e = ents.get(qid_c)
@@ -109,13 +165,17 @@ def wikidata_person(name):
             continue
         if not cl.get("P569"):          # no birth date -> cannot compute any age
             continue
-        key = (len(e.get("sitelinks", {})),
+        key = (2 if len(ids) == 1 else _match(e, want),
+               len(e.get("sitelinks", {})),
                1 if cl.get("P18") else 0,
                1 if (cl.get("P22") or cl.get("P25")) else 0)
         if best_key is None or key > best_key:
             best, best_key, qid_best = e, key, qid_c
     if best is None:
         return None
+    if best_key[0] == 0:
+        print(f"!! no exact Wikidata match for {name!r}, using "
+              f"{best_label(best, name)!r}; pin it with a qid in seed_people.json")
     e, qid = best, qid_best
     claims = e.get("claims", {})
 
@@ -172,15 +232,12 @@ def wikidata_by_qid(qid):
             "commons_cat": ccat if isinstance(ccat, str) else None}
 
 
-def commons_download(file_name, dest, width=1200):
-    name = file_name.replace(" ", "_")
-    url = ("https://commons.wikimedia.org/wiki/Special:FilePath/"
-           + urllib.parse.quote(name) + f"?width={width}")
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=90) as r:
-        data = r.read()
-    with open(dest, "wb") as f:
-        f.write(data)
+def commons_download(file_name, dest, width=1280):
+    import commons
+    from face import thumb_url
+    url = thumb_url("File:" + file_name, width)
+    if not commons.download(url, dest, min_bytes=1000):
+        raise FileNotFoundError(url)
     return dest
 
 

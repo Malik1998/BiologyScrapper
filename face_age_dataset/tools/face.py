@@ -16,35 +16,41 @@ import urllib.request
 import cv2
 import numpy as np
 
-UA = "faces-dataset/0.1 (research dataset build)"
+UA = "faces-dataset/0.2 (https://github.com/Malik1998/BiologyScrapper; research dataset build)"
 MODEL = os.path.join(os.path.dirname(__file__), "..", "models", "yunet.onnx")
 # below this cosine we refuse to claim the face is the subject
 IDENTITY_MIN = 0.30
-# eye-to-eye distance in the 1400px working copy; below this the face is a
+# eye-to-eye distance in the 1280px working copy; below this the face is a
 # speck in an event photo and no amount of upscaling will show features
 MIN_INTEROCULAR = 30.0
 
 
-def thumb_url(file_title, width=1400):
+# Wikimedia only serves these thumbnail widths; any other width is answered
+# with 429 ("use thumbnail images in sizes listed on w.wiki/GHai"). Asking for
+# 1400/3000/4000 made nearly every download a rate-limit wait.
+THUMB_STEPS = (120, 250, 330, 500, 960, 1280, 1920, 3840)
+
+
+def snap_width(width):
+    return next((s for s in THUMB_STEPS if s >= width), THUMB_STEPS[-1])
+
+
+def thumb_url(file_title, width=1280, orig_w=None):
+    """A thumbnail URL at a standard width, or the original when it is not
+    wider than that: asking to upscale is refused with a 429 as well."""
+    width = snap_width(width)
     name = file_title.split(":", 1)[1].replace(" ", "_")
-    return ("https://commons.wikimedia.org/wiki/Special:FilePath/"
-            + urllib.parse.quote(name) + f"?width={width}")
+    url = "https://commons.wikimedia.org/wiki/Special:FilePath/" + urllib.parse.quote(name)
+    if orig_w and orig_w <= width:
+        return url
+    return url + f"?width={width}"
 
 
-def fetch(url, dest, tries=3):
-    for i in range(tries):
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=90) as r:
-                data = r.read()
-            if len(data) < 3000:
-                return False
-            with open(dest, "wb") as f:
-                f.write(data)
-            return True
-        except Exception:
-            time.sleep(2 * (i + 1))
-    return False
+def fetch(url, dest):
+    """Throttled download shared with the rest of the harvester; raises
+    commons.RateLimited rather than pretending the file does not exist."""
+    import commons
+    return commons.download(url, dest)
 
 
 import threading
@@ -90,7 +96,14 @@ def eye_visibility(img, reye, leye, nose, interocular):
     return float(min(1.0, max(0.0, (ratio - 0.30) / 0.35)))
 
 
-def analyse(path, ref_emb=None, identity_min=None):
+def url_for(c, width=1280):
+    """Download URL for a candidate row from any source."""
+    if c.get("dl_url"):
+        return c["big_url"] if width > 1280 and c.get("big_url") else c["dl_url"]
+    return thumb_url(c["title"], width, orig_w=c.get("w"))
+
+
+def analyse(path, ref_emb=None, identity_min=None, min_interocular=None):
     identity_min = IDENTITY_MIN if identity_min is None else identity_min
     img = cv2.imread(path)
     if img is None:
@@ -165,7 +178,9 @@ def analyse(path, ref_emb=None, identity_min=None):
             return {"n_faces": n, "score": 0.0, "img_w": w, "img_h": h,
                     "identity": None, "reason": "no_reference_and_multiple_faces"}
 
-    if main["interocular"] < MIN_INTEROCULAR * (w / 1400.0):
+    eye_min = (min_interocular if min_interocular is not None
+               else MIN_INTEROCULAR * (w / 1400.0))
+    if main["interocular"] < eye_min:
         return {"n_faces": n, "score": 0.0, "img_w": w, "img_h": h,
                 "identity": main.get("identity"), "interocular": main["interocular"],
                 "reason": "face_too_small"}
@@ -201,9 +216,18 @@ def analyse(path, ref_emb=None, identity_min=None):
             **{k: (round(v, 3) if isinstance(v, float) else v) for k, v in main.items()}}
 
 
+# A face that is "too small" in the 1280px working copy is often perfectly
+# usable in the original: event photos are 4000-6000px wide. Before rejecting,
+# look again at up to HIRES_W, judged by an absolute eye distance.
+HIRES_W = 3840
+HIRES_MIN_EYE = 40.0
+HIRES_BUDGET = 15       # per slot; each rescue is a multi-MB download
+
+
 def run(cands, cache_dir, top=40, ref_emb=None, identity_min=None):
     os.makedirs(cache_dir, exist_ok=True)
     out = []
+    budget = HIRES_BUDGET
     for c in cands[:top]:
         # key the cache on the title, not the position, so re-ranking the
         # candidate list does not force a re-download of everything
@@ -212,11 +236,22 @@ def run(cands, cache_dir, top=40, ref_emb=None, identity_min=None):
         if not dest.lower().endswith((".jpg", ".jpeg", ".png")):
             dest += ".jpg"
         if not os.path.exists(dest):
-            if not fetch(thumb_url(c["title"]), dest):
+            if not fetch(url_for(c), dest):
                 continue
         a = analyse(dest, ref_emb=ref_emb, identity_min=identity_min)
         if not a:
             continue
+        if (a.get("reason") == "face_too_small" and budget > 0
+                and min(c.get("w", 0), c.get("h", 0)) > 1400):
+            width = min(c.get("w", HIRES_W), HIRES_W)
+            big = os.path.join(cache_dir, "big_" + os.path.basename(dest))
+            if os.path.exists(big) or (budget and fetch(url_for(c, width), big)):
+                budget -= 1
+                a2 = analyse(big, ref_emb=ref_emb, identity_min=identity_min,
+                             min_interocular=HIRES_MIN_EYE)
+                if a2 and a2.get("score", 0) > 0:
+                    a2["from_hires"] = True
+                    a, dest = a2, big
         out.append({**c, "local": dest, "face": a})
     out.sort(key=lambda r: -r["face"]["score"])
     return out

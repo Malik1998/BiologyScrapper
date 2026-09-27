@@ -12,7 +12,7 @@ import urllib.request
 from datetime import date
 
 ENDPOINT = "https://query.wikidata.org/sparql"
-UA = "faces-dataset/0.1 (research dataset build)"
+UA = "faces-dataset/0.2 (https://github.com/Malik1998/BiologyScrapper; research dataset build)"
 THIS_YEAR = date.today().year
 
 QUERY = """

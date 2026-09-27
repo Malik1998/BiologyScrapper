@@ -13,6 +13,9 @@ import cv2
 
 sys.path.insert(0, os.path.dirname(__file__))
 import commons as C
+import flickr
+import websearch
+from review_web import rejected_urls
 import face as F
 from identity import (wikidata_person, wikidata_by_qid, commons_download,
                       embed_faces)
@@ -51,30 +54,31 @@ def prior_rank(r):
     return -(bonus + tall + min(px / 3000.0, 1.0))
 
 
-def harvest_slot(cat, birth, lo, hi):
-    """Prefer by-year categories; fall back to metadata scanning."""
+FLICKR_BELOW = 30   # ask Flickr / the web only when Commons is thin for this slot
+USE_WEB = True
+
+
+def harvest_slot(cat, birth, lo, hi, name=None):
+    """Prefer by-year categories; fall back to metadata scanning.
+
+    Network failures propagate on purpose. They used to be caught and printed,
+    which left rows empty and got the slot recorded as "no dated photos" --
+    30 slots in one run, Nico Rosberg's 105 candidates among them.
+    """
     rows = []
     if has_by_year(cat):
-        try:
-            rows = C.harvest_by_year(cat, birth, lo, hi)
-        except Exception as e:
-            print(f"    by_year failed: {e}")
+        rows = C.harvest_by_year(cat, birth, lo, hi)
     # By-year categories can be small AND polluted -- Charles III's 1990s years
     # are mostly commemorative plaques he unveiled, not photos of him. A low
     # threshold here silently suppressed the far richer flat harvest.
     if len(rows) < 50:
-        try:
-            more = C.harvest(cat, birth, lo, hi, depth=1)
-            seen = {r["title"] for r in rows}
-            rows += [m for m in more if m["title"] not in seen]
-        except Exception as e:
-            print(f"    flat harvest failed: {e}")
+        more = C.harvest(cat, birth, lo, hi, depth=1)
+        seen = {r["title"] for r in rows}
+        rows += [m for m in more if m["title"] not in seen]
     # dedicated portrait categories are where the well-framed faces live
     for suffix in (" portraits", " official portraits"):
-        try:
-            extra = C.harvest(cat + suffix, birth, lo, hi, depth=1)
-        except Exception:
-            continue
+        # a missing category just lists nothing, so no try/except needed
+        extra = C.harvest(cat + suffix, birth, lo, hi, depth=1)
         seen = {r["title"] for r in rows}
         for e in extra:
             e["from_portrait_cat"] = True
@@ -84,6 +88,15 @@ def harvest_slot(cat, birth, lo, hi):
                 for r in rows:
                     if r["title"] == e["title"]:
                         r["from_portrait_cat"] = True
+    if name and len(rows) < FLICKR_BELOW:
+        extra = flickr.harvest(name, birth, lo, hi)
+        if extra:
+            print(f"       flickr: +{len(extra)} candidates for {name}")
+        rows += extra
+    if name and USE_WEB and len(rows) < FLICKR_BELOW:
+        extra = websearch.harvest(name, birth, lo, hi)
+        print(f"       web search: +{len(extra)} dated candidates for {name}")
+        rows += extra
     rows.sort(key=prior_rank)
     return rows
 
@@ -122,7 +135,7 @@ def reference_embedding(person, cache, fallback_rows=None):
         if not os.path.exists(p):
             try:
                 commons_download(person["image"], p)
-            except Exception:
+            except FileNotFoundError:
                 p = None
         if p:
             tried.append(p)
@@ -136,13 +149,21 @@ def reference_embedding(person, cache, fallback_rows=None):
     for r in (fallback_rows or [])[:12]:
         q = os.path.join(cache, f"reffb_{person['qid']}_"
                          + "".join(c if c.isalnum() else "_" for c in r["title"][5:])[:60] + ".jpg")
-        if not os.path.exists(q) and not F.fetch(F.thumb_url(r["title"], 1200), q):
+        if not os.path.exists(q) and not F.fetch(F.url_for(r, 1280), q):
             continue
         emb, nf = _embed_main_face(q)
         if emb is not None and nf == 1:
             print(f"       reference fell back to {r['title'][5:60]}")
             return emb
     return None
+
+
+def _web_ok(s):
+    """Web hits need a firm identity match: nearly every wrong-person pick in
+    review was a relative or namesake scoring below websearch.WEB_ID_MIN."""
+    if s.get("source") != "web":
+        return True
+    return (s["face"].get("identity") or 0) >= websearch.WEB_ID_MIN
 
 
 def crop_face(src, box, dest, pad=0.55):
@@ -159,8 +180,16 @@ def crop_face(src, box, dest, pad=0.55):
     return True
 
 
-def build_person(name, slug=None, top=60):
-    subj = wikidata_person(name)
+def build_person(name, slug=None, top=60, qid=None, father_qid=None,
+                 mother_qid=None):
+    """Build or complete one person.
+
+    Slots already filled in an existing meta.json are kept as they are, so a
+    re-run only spends requests on what is still missing and can never make a
+    finished slot worse. `qid` pins the subject; `father_qid`/`mother_qid`
+    supply parents Wikidata does not link.
+    """
+    subj = wikidata_person(name, qid=qid)
     if not subj or not subj.get("birth"):
         print(f"!! cannot resolve {name}")
         return None
@@ -174,8 +203,22 @@ def build_person(name, slug=None, top=60):
     os.makedirs(cache, exist_ok=True)
     outdir = os.path.join(DATA, slug)
 
-    father = wikidata_by_qid(subj["father"]) if subj.get("father") else None
-    mother = wikidata_by_qid(subj["mother"]) if subj.get("mother") else None
+    father_qid = father_qid or subj.get("father")
+    mother_qid = mother_qid or subj.get("mother")
+    father = wikidata_by_qid(father_qid) if father_qid else None
+    mother = wikidata_by_qid(mother_qid) if mother_qid else None
+
+    prev = {}
+    mp = os.path.join(outdir, "meta.json")
+    if os.path.isfile(mp):
+        try:
+            old = json.load(open(mp))
+            if old.get("subject", {}).get("qid") == subj["qid"]:
+                prev = {k: v for k, v in old.get("slots", {}).items()
+                        if v.get("status") == "ok"
+                        and os.path.isfile(os.path.join(DATA, v.get("file", "")))}
+        except Exception:
+            pass
 
     people = {
         "subject_now":   (subj,   40, 50),
@@ -195,6 +238,9 @@ def build_person(name, slug=None, top=60):
     }
 
     for slot, (p, lo, hi) in people.items():
+        if slot in prev:
+            meta["slots"][slot] = prev[slot]
+            continue
         entry = {"status": "missing", "candidates_found": 0}
         if not p:
             entry["reason"] = "parent unknown in Wikidata"
@@ -221,14 +267,20 @@ def build_person(name, slug=None, top=60):
         cat = p.get("commons_cat") or p["label"]
         print(f"  [{slot}] {p['label']} ({p['birth']}) age {lo}-{hi} cat={cat!r}")
 
-        rows = harvest_slot(cat, p["birth"], lo, hi)
+        rows = harvest_slot(cat, p["birth"], lo, hi, name=p["label"])
+        rejected = rejected_urls()
+        rows = [r for r in rows
+                if r.get("page") not in rejected and r.get("file_url") not in rejected]
         entry["candidates_found"] = len(rows)
         if not rows:
             entry["reason"] = "no dated photos in age range"
             meta["slots"][slot] = entry
             continue
 
-        ref = reference_embedding(p, cache, fallback_rows=rows)
+        # never build the reference from a web hit: the candidate then matches
+        # itself at cosine 1.0 (Keanu Reeves passed as Jacelyn Reeves that way)
+        ref = reference_embedding(p, cache,
+                                  fallback_rows=[r for r in rows if r.get("source") != "web"])
         entry["reference_image"] = p.get("image")
         if ref is None:
             # No usable reference means the identity check is off: the pick is
@@ -238,7 +290,7 @@ def build_person(name, slug=None, top=60):
         scored = F.run(rows, os.path.join(cache, slot), top=top, ref_emb=ref,
                        identity_min=THRESH.get(slot, 0.30))
 
-        usable = [s for s in scored if s["face"].get("score", 0) > 0]
+        usable = [s for s in scored if s["face"].get("score", 0) > 0 and _web_ok(s)]
         entry["candidates_scored"] = len(scored)
         entry["candidates_usable"] = len(usable)
         low_conf = False
@@ -249,7 +301,7 @@ def build_person(name, slug=None, top=60):
             relaxed = max(0.18, THRESH.get(slot, 0.30) - 0.10)
             scored = F.run(rows, os.path.join(cache, slot), top=top, ref_emb=ref,
                            identity_min=relaxed)
-            usable = [s for s in scored if s["face"].get("score", 0) > 0]
+            usable = [s for s in scored if s["face"].get("score", 0) > 0 and _web_ok(s)]
             if usable:
                 low_conf = True
                 entry["relaxed_identity_min"] = relaxed
@@ -260,6 +312,8 @@ def build_person(name, slug=None, top=60):
             meta["slots"][slot] = entry
             continue
 
+        # a licensed, curator-dated file beats a search hit of similar quality
+        usable.sort(key=lambda s: (s.get("source") == "web", -s["face"]["score"]))
         best = usable[0]
         os.makedirs(outdir, exist_ok=True)
         ext = ".jpg"
@@ -269,7 +323,7 @@ def build_person(name, slug=None, top=60):
         # working copy we used for scoring
         hi_res = os.path.join(cache, slot, "hires_" + os.path.basename(best["local"]))
         box, src = best["face"]["box"], best["local"]
-        if F.fetch(F.thumb_url(best["title"], width=3000), hi_res):
+        if F.fetch(F.url_for(best, 3840), hi_res):
             a2 = F.analyse(hi_res, ref_emb=ref, identity_min=THRESH.get(slot, 0.30))
             if a2 and a2.get("score", 0) > 0 and a2.get("box"):
                 box, src = a2["box"], hi_res
@@ -280,7 +334,8 @@ def build_person(name, slug=None, top=60):
         f = best["face"]
         entry.update({
             "status": "ok",
-            "needs_visual_check": bool(low_conf or ref is None),
+            # web hits are dated from a caption and unlicensed: always look
+            "needs_visual_check": bool(low_conf or ref is None or best.get("source") == "web"),
             "file": os.path.relpath(full, DATA),
             "face_crop": os.path.relpath(face_p, DATA),
             "person": p["label"],
@@ -291,6 +346,8 @@ def build_person(name, slug=None, top=60):
             "date_precision": best["date_precision"],
             "date_source": best.get("date_source", "exif"),
             "date_conflict": best.get("date_conflict", False),
+            "source": best.get("source", "commons"),
+            "search_title": best.get("search_title"),
             "source_page": best["page"],
             "source_file_url": best["file_url"],
             "license": best.get("license"),

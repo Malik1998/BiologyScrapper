@@ -70,9 +70,12 @@ def already_done(slug_guess, name, state):
     return bool(rec and rec.get("status") in ("ok", "empty"))
 
 
-def one(name, state, top):
+def one(name, state, top, spec=None):
+    spec = spec or {}
     try:
-        meta = build_person(name, top=top)
+        meta = build_person(name, top=top, qid=spec.get("qid"),
+                            father_qid=spec.get("father_qid"),
+                            mother_qid=spec.get("mother_qid"))
         if not meta:
             return name, {"status": "unresolved"}
         return name, {
@@ -81,6 +84,10 @@ def one(name, state, top):
             "complete_slots": meta.get("complete_slots", 0),
             "has_minimum_set": meta.get("has_minimum_set", False),
         }
+    except C.RateLimited as e:
+        # not a failure of this person: harvest_all requeues them at the back
+        print(f"  !! {name}: {e}", flush=True)
+        return name, {"status": "rate_limited", "error": str(e)}
     except Exception as e:
         traceback.print_exc()
         return name, {"status": "error", "error": f"{type(e).__name__}: {e}"}
@@ -96,12 +103,15 @@ def main():
                     help="min seconds between Commons calls (shared)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--redo", action="store_true", help="ignore saved state")
+    ap.add_argument("--no-web", action="store_true",
+                    help="do not fall back to web image search")
+    ap.add_argument("--retry-missing", action="store_true",
+                    help="re-run everyone without all 4 slots; filled slots are kept")
     args = ap.parse_args()
 
-    names = args.names
-    if not names:
-        seed = json.load(open(os.path.join(os.path.dirname(__file__), "seed_people.json")))
-        names = [p["name"] for p in seed["people"]]
+    seed = json.load(open(os.path.join(os.path.dirname(__file__), "seed_people.json")))
+    specs = {p["name"]: p for p in seed["people"]}
+    names = args.names or [p["name"] for p in seed["people"]]
     if args.limit:
         names = names[:args.limit]
 
@@ -110,19 +120,39 @@ def main():
     # Threads win here by overlapping downloads and face detection, which do
     # not touch the throttled API at all.
     C.MIN_GAP = args.gap if args.gap else 1.0
+    import build
+    build.USE_WEB = not args.no_web
 
     state = {} if args.redo else sync_state_from_dataset(load_state())
     if not args.redo:
         save_state(state)
-    todo = [n for n in names if args.redo or not already_done(None, n, state)]
+    if args.retry_missing:
+        todo = [n for n in names
+                if (state.get(n) or {}).get("complete_slots", 0) < 4]
+    else:
+        todo = [n for n in names if args.redo or not already_done(None, n, state)]
     print(f"{len(todo)} to build ({len(names) - len(todo)} already done), "
           f"jobs={args.jobs} gap={C.MIN_GAP:.2f}s top={args.top}", flush=True)
 
     done = 0
+    # A person refused by Wikimedia goes to the back of the queue (the pool
+    # runs submissions in order) and is tried again once the others are done,
+    # up to MAX_REQUEUE times; only then is it recorded as an error.
+    MAX_REQUEUE = 3
+    tries = {n: 0 for n in todo}
     with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-        futs = {ex.submit(one, n, state, args.top): n for n in todo}
-        for fut in as_completed(futs):
+        pending = {ex.submit(one, n, state, args.top, specs.get(n)) for n in todo}
+        while pending:
+            fut = next(as_completed(pending))
+            pending.discard(fut)
             name, rec = fut.result()
+            if rec.get("status") == "rate_limited":
+                tries[name] += 1
+                if tries[name] <= MAX_REQUEUE:
+                    print(f"  -> {name}: requeued ({tries[name]}/{MAX_REQUEUE})", flush=True)
+                    pending.add(ex.submit(one, name, state, args.top, specs.get(name)))
+                    continue
+                rec["status"] = "error"
             state[name] = rec
             save_state(state)
             done += 1
