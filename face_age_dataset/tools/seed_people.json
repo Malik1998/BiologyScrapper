@@ -1069,7 +1069,351 @@
    "batch": 4,
    "country": "LatAm",
    "qid": "Q1199119"
+  },
+  {
+   "name": "Chiara Mastroianni",
+   "why": "Marcello Mastroianni (1924) + Catherine Deneuve (1943)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q283317"
+  },
+  {
+   "name": "Charlotte Gainsbourg",
+   "why": "Serge Gainsbourg (1928) + Jane Birkin (1946)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q276005"
+  },
+  {
+   "name": "David Hallyday",
+   "why": "Johnny Hallyday (1943) + Sylvie Vartan (1944)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q722660"
+  },
+  {
+   "name": "Thomas Dutronc",
+   "why": "Jacques Dutronc (1943) + Françoise Hardy (1944)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q3487603"
+  },
+  {
+   "name": "Anthony Delon",
+   "why": "Alain Delon (1935) + Nathalie Delon (1941)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q573147"
+  },
+  {
+   "name": "Eva Green",
+   "why": "Walter Green (1940) + Marlène Jobert (1940)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q191644"
+  },
+  {
+   "name": "Julie Depardieu",
+   "why": "Gérard Depardieu (1948) + Élisabeth Depardieu (1941)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q240157"
+  },
+  {
+   "name": "Mazarine Pingeot",
+   "why": "François Mitterrand (1916) + Anne Pingeot (1943)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q462950"
+  },
+  {
+   "name": "Claude Chirac",
+   "why": "None (1932) + Bernadette Chirac (1933)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q2977194"
+  },
+  {
+   "name": "Marine Le Pen",
+   "why": "Jean-Marie Le Pen (1928) + Pierrette Lalanne (1935)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q12927"
+  },
+  {
+   "name": "Emma de Caunes",
+   "why": "Antoine de Caunes (1953) + Gaëlle Royer (1954)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q60304"
+  },
+  {
+   "name": "Nicolas Bedos",
+   "why": "Guy Bedos (1934) + Joëlle Bercot (1957)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q741655"
+  },
+  {
+   "name": "Matthieu Chedid",
+   "why": "Louis Chedid (1948)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q2365459"
+  },
+  {
+   "name": "Joakim Noah",
+   "why": "Yannick Noah (1960) + Cecilia Rodhe (1961)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q311735"
+  },
+  {
+   "name": "Vincent Cassel",
+   "why": "Jean-Pierre Cassel (1932)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q193504"
+  },
+  {
+   "name": "Sarah Biasini",
+   "why": "Daniel Biasini (1950) + Romy Schneider (1938)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q441822"
+  },
+  {
+   "name": "Lolita Chammah",
+   "why": "Ronald Chammah (1951) + Isabelle Huppert (1953)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q1661394"
+  },
+  {
+   "name": "Paul Belmondo",
+   "why": "Jean-Paul Belmondo (1933) + Élodie Constant (1934)",
+   "batch": 5,
+   "country": "France",
+   "qid": "Q171557"
+  },
+  {
+   "name": "Matthias Schoenaerts",
+   "why": "Julien Schoenaerts (1925)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q427019"
+  },
+  {
+   "name": "Axel Merckx",
+   "why": "Eddy Merckx (1945)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q455030"
+  },
+  {
+   "name": "Vanina Ickx",
+   "why": "Jacky Ickx (1945)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q448903"
+  },
+  {
+   "name": "Alexander De Croo",
+   "why": "Herman De Croo (1937)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q476596"
+  },
+  {
+   "name": "Charles Michel",
+   "why": "Louis Michel (1947)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q950958"
+  },
+  {
+   "name": "Prince Laurent of Belgium",
+   "why": "Albert II of Belgium (1934) + Queen Paola of Belgium (1937)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q700152"
+  },
+  {
+   "name": "Princess Astrid of Belgium",
+   "why": "Albert II of Belgium (1934) + Queen Paola of Belgium (1937)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q170194"
+  },
+  {
+   "name": "Philippe of Belgium",
+   "why": "Albert II of Belgium (1934) + Queen Paola of Belgium (1937)",
+   "batch": 5,
+   "country": "Belgium",
+   "qid": "Q155004"
+  },
+  {
+   "name": "Alessandro Gassmann",
+   "why": "Vittorio Gassman (1922) + Juliette Mayniel (1936)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q1276918"
+  },
+  {
+   "name": "Christian De Sica",
+   "why": "Vittorio De Sica (1901) + María Mercader (1918)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q554787"
+  },
+  {
+   "name": "Asia Argento",
+   "why": "Dario Argento (1940) + Daria Nicolodi (1950)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q232052"
+  },
+  {
+   "name": "Isabella Rossellini",
+   "why": "Roberto Rossellini (1906) + Ingrid Bergman (1915)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q203840"
+  },
+  {
+   "name": "Elettra Rossellini Wiedemann",
+   "why": "Jonathan Wiedemann () + Isabella Rossellini (1952)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q2521871"
+  },
+  {
+   "name": "Ricky Tognazzi",
+   "why": "Ugo Tognazzi (1922)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q367489"
+  },
+  {
+   "name": "Gianmarco Tognazzi",
+   "why": "Ugo Tognazzi (1922) + Franca Bettoia (1936)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q3763355"
+  },
+  {
+   "name": "John Elkann",
+   "why": "Alain Elkann (1950) + Margherita Agnelli (1955)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q284011"
+  },
+  {
+   "name": "Lapo Elkann",
+   "why": "Alain Elkann (1950) + Margherita Agnelli (1955)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q941751"
+  },
+  {
+   "name": "Ginevra Elkann",
+   "why": "Alain Elkann (1950) + Margherita Agnelli (1955)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q2286760"
+  },
+  {
+   "name": "Andrea Agnelli",
+   "why": "Umberto Agnelli (1934) + Allegra Caracciolo (1945)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q138351"
+  },
+  {
+   "name": "Marina Berlusconi",
+   "why": "Silvio Berlusconi (1936) + Carla Dall'Oglio (1940)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q468797"
+  },
+  {
+   "name": "Pier Silvio Berlusconi",
+   "why": "Silvio Berlusconi (1936) + Carla Dall'Oglio (1940)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q940243"
+  },
+  {
+   "name": "Barbara Berlusconi",
+   "why": "Silvio Berlusconi (1936) + Veronica Lario (1956)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q3634593"
+  },
+  {
+   "name": "Paolo Maldini",
+   "why": "Cesare Maldini (1932)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q483027"
+  },
+  {
+   "name": "Irene Fornaciari",
+   "why": "Zucchero (1955)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q373717"
+  },
+  {
+   "name": "Rosalinda Celentano",
+   "why": "Adriano Celentano (1938) + Claudia Mori (1944)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q274314"
+  },
+  {
+   "name": "Stefania Craxi",
+   "why": "Bettino Craxi (1934)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q390378"
+  },
+  {
+   "name": "Alessandra Mussolini",
+   "why": "Romano Mussolini (1927) + Anna Maria Villani Scicolone (1938)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q285543"
+  },
+  {
+   "name": "Carlo Ponti Jr.",
+   "why": "Carlo Ponti (1912) + Sophia Loren (1934)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q1042396"
+  },
+  {
+   "name": "Edoardo Ponti",
+   "why": "Carlo Ponti (1912) + Sophia Loren (1934)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q327436"
+  },
+  {
+   "name": "Valentino Rossi",
+   "why": "Graziano Rossi (1954)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q169814"
+  },
+  {
+   "name": "Brando De Sica",
+   "why": "Christian De Sica (1951) + Silvia Verdone (1958)",
+   "batch": 5,
+   "country": "Italy",
+   "qid": "Q3643660"
   }
  ],
- "_note_batch2": "Batch 2 is picked parent-first: parents born ~1935-1963 (63-90 now), so their 40-50 window falls in ~1985-2013, with the child now 40-50."
+ "_note_batch2": "Batch 2 is picked parent-first: parents born ~1935-1963 (63-90 now), so their 40-50 window falls in ~1985-2013, with the child now 40-50.",
+ "_note_batch5": "France/Belgium/Italy: dated press captions (Purepeople, Paris Match, Corriere) worked best for France in batch 4."
 }
