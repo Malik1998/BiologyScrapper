@@ -1412,8 +1412,234 @@
    "batch": 5,
    "country": "Italy",
    "qid": "Q3643660"
+  },
+  {
+   "name": "Rahul Gandhi",
+   "why": "Rajiv Gandhi (1944) + Sonia Gandhi (1946)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q10218"
+  },
+  {
+   "name": "Priyanka Gandhi Vadra",
+   "why": "Rajiv Gandhi (1944) + Sonia Gandhi (1946)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q607685"
+  },
+  {
+   "name": "Saif Ali Khan",
+   "why": "Mansoor Ali Khan Pataudi (1941) + Sharmila Tagore (1944)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q252290"
+  },
+  {
+   "name": "Twinkle Khanna",
+   "why": "Rajesh Khanna (1942) + Dimple Kapadia (1957)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q2556523"
+  },
+  {
+   "name": "Karisma Kapoor",
+   "why": "None (1947) + Babita Kapoor (1948)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q464578"
+  },
+  {
+   "name": "Farhan Akhtar",
+   "why": "Javed Akhtar (1945) + Honey Irani (1955)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q590853"
+  },
+  {
+   "name": "Pooja Bhatt",
+   "why": "Mahesh Bhatt (1948) + Kiran Bhatt ()",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q786469"
+  },
+  {
+   "name": "Jyotiraditya Scindia",
+   "why": "Madhavrao Scindia (1945)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q16213761"
+  },
+  {
+   "name": "Sachin Pilot",
+   "why": "Rajesh Pilot (1945)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q314351"
+  },
+  {
+   "name": "Mahesh Babu",
+   "why": "Krishna Ghattamaneni (1943)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q2087610"
+  },
+  {
+   "name": "Bobby Deol",
+   "why": "Dharmendra (1935)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q48619"
+  },
+  {
+   "name": "Omar Abdullah",
+   "why": "Farooq Abdullah (1937)",
+   "batch": 6,
+   "country": "India",
+   "qid": "Q2745305"
+  },
+  {
+   "name": "Tracee Ellis Ross",
+   "why": "Robert Ellis Silberstein (1943) + Diana Ross (1944)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q534371"
+  },
+  {
+   "name": "Laila Ali",
+   "why": "Muhammad Ali (1942) + Veronica Porché Ali (1955)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q255099"
+  },
+  {
+   "name": "Lenny Kravitz",
+   "why": "Sy Kravitz (1924) + Roxie Roker (1929)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q180224"
+  },
+  {
+   "name": "Grant Hill",
+   "why": "Calvin Hill (1947)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q311895"
+  },
+  {
+   "name": "Ken Griffey Jr.",
+   "why": "Ken Griffey, Sr. (1950)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q536900"
+  },
+  {
+   "name": "Barry Bonds",
+   "why": "Bobby Bonds (1946)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q314712"
+  },
+  {
+   "name": "Kobe Bryant",
+   "why": "Joe Bryant (1954) + Pam Bryant (1954)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q25369"
+  },
+  {
+   "name": "Ziggy Marley",
+   "why": "Bob Marley (1945) + Rita Marley (1946)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q199418"
+  },
+  {
+   "name": "Damian Marley",
+   "why": "Bob Marley (1945) + Cindy Breakspeare (1954)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q310796"
+  },
+  {
+   "name": "Martin Luther King III",
+   "why": "Martin Luther King Jr. (1929) + Coretta Scott King (1927)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q1886607"
+  },
+  {
+   "name": "Natalie Cole",
+   "why": "Nat King Cole (1919) + Maria Cole (1922)",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q231942"
+  },
+  {
+   "name": "Shaun Wright-Phillips",
+   "why": "Ian Wright (1963), adoptive father; not linked in Wikidata",
+   "batch": 6,
+   "country": "Black",
+   "qid": "Q192747",
+   "father_qid": "Q312595"
+  },
+  {
+   "name": "Timmy Hung",
+   "why": "Sammo Hung (1952)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q5354230"
+  },
+  {
+   "name": "Pansy Ho",
+   "why": "Stanley Ho (1921) + Lucina Laam (1943)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q8965221"
+  },
+  {
+   "name": "Lawrence Ho",
+   "why": "Stanley Ho (1921) + Lucina Laam (1943)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q10886337"
+  },
+  {
+   "name": "Victor Li",
+   "why": "Li Ka-shing (1928) + Chong Yuet Ming (1933)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q700167"
+  },
+  {
+   "name": "Richard Li",
+   "why": "Li Ka-shing (1928) + Chong Yuet Ming (1933)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q712663"
+  },
+  {
+   "name": "Sean Lien",
+   "why": "Lien Chan (1936) + Lien Fang Yu (1943)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q7441162"
+  },
+  {
+   "name": "Chiang Wan-an",
+   "why": "Chiang Hsiao-yen (1942)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q15920021"
+  },
+  {
+   "name": "Shannon Lee",
+   "why": "Bruce Lee (1940) + Linda Lee Cadwell (1945)",
+   "batch": 6,
+   "country": "China",
+   "qid": "Q698411"
   }
  ],
  "_note_batch2": "Batch 2 is picked parent-first: parents born ~1935-1963 (63-90 now), so their 40-50 window falls in ~1985-2013, with the child now 40-50.",
- "_note_batch5": "France/Belgium/Italy: dated press captions (Purepeople, Paris Match, Corriere) worked best for France in batch 4."
+ "_note_batch5": "France/Belgium/Italy: dated press captions (Purepeople, Paris Match, Corriere) worked best for France in batch 4.",
+ "_note_batch6": "India / Black (US, UK, Jamaica) / Chinese (HK, Taiwan): parents photographed at 40-50 in the 1980s-2000s."
 }
