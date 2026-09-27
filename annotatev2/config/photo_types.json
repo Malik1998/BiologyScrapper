@@ -1,6 +1,6 @@
 [
   {"id": "self_30_40", "person": "self", "label": "You, ~20-40", "hint": "A recent photo of yourself.", "required": true},
-  {"id": "self_50_60", "person": "self", "label": "You, ~50-60", "hint": "An older photo of yourself, if you have one.", "required": true},
+  {"id": "self_50_60", "person": "self", "label": "You, ~50-60", "hint": "An older photo of yourself.", "required": false, "optional_note": "Optional, but if you have one, please send it - we really need this photo!"},
   {"id": "mother_50_60", "person": "mother", "label": "Mother, ~50-60", "hint": "A photo of your mother.", "required": false},
   {"id": "father_50_60", "person": "father", "label": "Father, ~50-60", "hint": "A photo of your father.", "required": false}
 ]

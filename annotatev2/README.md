@@ -13,7 +13,9 @@ needed here):
 | `mother_50_60`   | the subject's mother          |
 | `father_50_60`   | the subject's father          |
 
-Both `self_*` photos are required; `mother_50_60`/`father_50_60` are each
+`self_30_40` is required. `self_50_60` is optional (many people won't have
+one), but its card shows a highlighted "please send it if you have one"
+note (`optional_note` in `config/photo_types.json`). `mother_50_60`/`father_50_60` are each
 individually optional but **at least one of the two** is required (see
 `OPTIONAL_GROUP` in `web/config.py`) — e.g. only one parent is
 available/willing, that's fine. It doesn't matter who physically operates
@@ -75,7 +77,7 @@ no code changes needed). For each card:
    `photo_year - birth_year` is the approximate age in the photo.
 
 Re-uploading a slot replaces the previous photo for it. A status line
-tracks completeness (both self photos + at least one parent). Progress is
+tracks completeness (the recent self photo + at least one parent). Progress is
 kept in `sessionStorage` + confirmed against the server (`GET
 /api/submissions/<id>/photos`), so refreshing mid-upload doesn't lose
 already-uploaded photos (though the browser-side thumbnail is gone until

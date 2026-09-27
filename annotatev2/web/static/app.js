@@ -74,8 +74,9 @@ function renderSlots() {
       <input id="birth-${type.person}" class="year-input" type="number" inputmode="numeric" min="1900" placeholder="e.g. 1955">
     `;
     card.innerHTML = `
-      <label>${type.label}${type.required ? "" : " (optional)"}</label>
+      <label>${type.label}${type.required || type.optional_note ? "" : " (optional)"}</label>
       <p class="hint">${type.hint}</p>
+      ${type.optional_note ? `<p class="optional-note">${type.optional_note}</p>` : ""}
       <div class="slot-preview" id="preview-${type.id}"></div>
       <input type="file" accept="image/*" id="file-${type.id}" class="slot-file-input">
       ${birthField}
@@ -182,7 +183,7 @@ function updateSubmitButton() {
     btn.disabled = false;
   } else {
     const missing = [];
-    if (!requiredDone) missing.push("both of your own photos");
+    if (!requiredDone) missing.push("your recent photo");
     if (!optionalDone) missing.push("at least one parent photo");
     statusEl.textContent = `${doneCount} of ${photoTypes.length} selected — still need: ${missing.join(" and ")}.`;
     btn.disabled = true;
