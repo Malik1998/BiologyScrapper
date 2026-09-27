@@ -40,6 +40,7 @@ def build():
             "people": len(people),
             "full_4_slots": sum(1 for p in people if p.get("complete_slots") == 4),
             "minimum_set": sum(1 for p in people if p.get("has_minimum_set")),
+            "3_slots": sum(1 for p in people if p.get("complete_slots") == 3),
         },
         "people": [],
     }
@@ -72,8 +73,20 @@ def build():
     json.dump(index, open(os.path.join(DATA, "index.json"), "w"),
               ensure_ascii=False, indent=2)
 
+    # summary first: how many people are usable, and how complete
+    by_n = {k: sum(1 for p in people if p.get("complete_slots", 0) == k) for k in range(5)}
+    with_parent3 = sum(1 for p in people if p.get("complete_slots") == 3 and p.get("has_minimum_set"))
+    summary = [
+        f"people: {len(people)}",
+        f"4 photos (now + young + father + mother): {by_n[4]}",
+        f"3 photos: {by_n[3]}  (of them now + young + a parent: {with_parent3})",
+        f"minimum set (now + young + at least one parent): "
+        f"{sum(1 for p in people if p.get('has_minimum_set'))}",
+        f"2 photos: {by_n[2]}   1 photo: {by_n[1]}",
+        "",
+    ]
     # each cell: age on the photo and the year it was taken, "46/1993"
-    lines = [f"{'person':<30}{'born':>6}{'now':>10}{'young':>10}"
+    lines = summary + [f"{'person':<30}{'born':>6}{'now':>10}{'young':>10}"
              f"{'father':>10}{'f.born':>7}{'mother':>10}{'m.born':>7}   set"]
     lines.append("-" * 97)
     for p in index["people"]:

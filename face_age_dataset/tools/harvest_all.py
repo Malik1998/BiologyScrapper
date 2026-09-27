@@ -36,7 +36,7 @@ def save_state(st):
         json.dump(st, open(STATE, "w"), ensure_ascii=False, indent=1)
 
 
-def sync_state_from_dataset(state):
+def sync_state_from_dataset(state, overwrite=False):
     """Rebuild progress from the dataset itself.
 
     The state file is a convenience; the built folders are the truth. Without
@@ -60,7 +60,9 @@ def sync_state_from_dataset(state):
                "has_minimum_set": m.get("has_minimum_set", False)}
         # index under every name that could be used to ask for this person
         for key in {m.get("query_name"), (m.get("subject") or {}).get("name")}:
-            if key and key not in state:
+            # overwrite: the dataset changed under the state file, e.g. review
+            # removed picks, so "4 slots" in the state is no longer true
+            if key and (overwrite or key not in state):
                 state[key] = rec
     return state
 
@@ -123,7 +125,8 @@ def main():
     import build
     build.USE_WEB = not args.no_web
 
-    state = {} if args.redo else sync_state_from_dataset(load_state())
+    state = {} if args.redo else sync_state_from_dataset(load_state(),
+                                                         overwrite=args.retry_missing)
     if not args.redo:
         save_state(state)
     if args.retry_missing:

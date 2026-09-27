@@ -27,13 +27,18 @@ BLOCKED = ("gettyimages", "alamy", "shutterstock", "istockphoto", "dreamstime",
            # older -- album covers, trading cards, film thumbnails, fan art.
            "youtube.", "ytimg.", "youtu.be", "ebay.", "etsy.", "discogs.",
            "abebooks.", "amazon.", "deviantart.", "fanaticscollect",
-           "auctions.yahoo", "magazinecollectors", "tumblr.", "agemdb.")
+           "auctions.yahoo", "magazinecollectors", "tumblr.", "agemdb.",
+           # round 3: wallpaper and horoscope sites date the post, not the photo
+           "gethucinema", "wallpaper", "ganeshaspeaks")
 # Caption words that mean "the year is of a product or an article, not of the
 # photo": covers, cards, posters, reissues, look-ahead pieces.
 BAD_CAPTION = re.compile(
     r"\b(album|cd|lp|vinyl|reissue|cover|topps|card|autograph|signed|poster|"
     r"souvenir|full movie|trailer|box office|net worth|forecast|upcoming|tickets|"
-    r"birthday|collection|issue)\b", re.I)
+    r"birthday|collection|issue|wallpapers?|horoscope|birth chart|transformation|"
+    r"before and after)\b", re.I)
+# "1998x3000" is a resolution, "2000 euros" a price: numbers that look like years
+NOT_A_YEAR = re.compile(r"\d{3,4}\s*[x×]\s*\d{3,4}|\b\d{4}\s*(euros?|dollars?|€|\$|rs|rupees)\b", re.I)
 MONTHS = {m: i + 1 for i, m in enumerate(
     "january february march april may june july august september october november december".split())}
 MONTHS.update({m: i + 1 for i, m in enumerate(
@@ -96,7 +101,7 @@ def harvest(name, birth, age_lo, age_hi, min_px=500):
             tn = _norm(title + " " + (r.get("url") or ""))
             if not all(t in tn.split() for t in (first[0], last)):
                 continue
-            if BAD_CAPTION.search(title):
+            if BAD_CAPTION.search(title) or NOT_A_YEAR.search(title):
                 continue
             years = _years_in(r)
             if years != {year}:

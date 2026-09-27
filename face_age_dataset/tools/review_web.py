@@ -3,11 +3,15 @@
 Each tile shows the whole photo with the chosen face boxed, and the facts the
 age rests on (caption year, computed age, identity cosine, caption text), so a
 reviewer -- human or model -- can confirm "right person, plausibly that age"
-or reject it. Verdicts go into work/web_review.json:
+or reject it. Verdicts go into work/web_review.json, one per slot, tied to the exact file
+that was reviewed:
 
-    {"<slug>/<slot>": {"ok": false, "note": "wedding photo is 2008, not 2018"}}
+    {"<slug>/<slot>": {"ok": false, "note": "...", "file_url": "<reviewed pick>",
+                       "rejected_urls": [...every pick ever rejected here...]}}
 
-and `apply` removes rejected slots from the dataset.
+A verdict only applies to the file it was given for. When a re-run puts a
+different pick into the slot, that pick is shown for review again -- keying by
+slot alone once let `apply` delete ten fresh, unreviewed picks.
 """
 
 import glob
@@ -62,7 +66,7 @@ def build():
     n = 0
     for m, slot, e in web_slots():
         key = f"{m['slug']}/{slot}"
-        if key in done:
+        if key in done and done[key].get("file_url") == e.get("source_file_url"):
             continue
         cv2.imwrite(os.path.join(OUT, key.replace("/", "__") + ".jpg"), tile(m, slot, e))
         n += 1
@@ -83,8 +87,12 @@ def apply():
         e = m["slots"].get(slot, {})
         if e.get("status") != "ok" or e.get("source") != "web":
             continue
+        if v.get("file_url") != e.get("source_file_url"):
+            continue            # a newer pick than the one judged: review it first
         # remember the rejected file so a later re-run does not pick it again
-        v["page"], v["file_url"] = e.get("source_page"), e.get("source_file_url")
+        v.setdefault("rejected_urls", [])
+        v["rejected_urls"] += [u for u in (e.get("source_page"), e.get("source_file_url"))
+                               if u and u not in v["rejected_urls"]]
         for f in (e.get("file"), e.get("face_crop")):
             if f and os.path.exists(os.path.join(DATA, f)):
                 os.remove(os.path.join(DATA, f))
@@ -102,8 +110,27 @@ def apply():
 
 def rejected_urls():
     done = json.load(open(VERDICTS)) if os.path.exists(VERDICTS) else {}
-    return {u for v in done.values() if not v.get("ok")
-            for u in (v.get("page"), v.get("file_url")) if u}
+    urls = set()
+    for v in done.values():
+        urls.update(v.get("rejected_urls", []))
+        if not v.get("ok"):
+            urls.update(u for u in (v.get("page"), v.get("file_url")) if u)
+    return urls
+
+
+def record(key, ok, note=None):
+    """Store a verdict for the pick currently in the slot."""
+    slug, slot = key.split("/")
+    e = json.load(open(os.path.join(DATA, slug, "meta.json")))["slots"][slot]
+    done = json.load(open(VERDICTS)) if os.path.exists(VERDICTS) else {}
+    v = done.get(key, {})
+    v.update(ok=ok, file_url=e.get("source_file_url"), page=e.get("source_page"))
+    if note:
+        v["note"] = note
+    else:
+        v.pop("note", None)
+    done[key] = v
+    json.dump(done, open(VERDICTS, "w"), ensure_ascii=False, indent=1)
 
 
 if __name__ == "__main__":
