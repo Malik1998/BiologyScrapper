@@ -79,7 +79,23 @@ def _years_in(r):
     return {int(y) for y in YEAR.findall(text) if int(y) <= date.today().year}
 
 
-def harvest(name, birth, age_lo, age_hi, min_px=500):
+def harvest(name, birth, age_lo, age_hi, min_px=500, native_names=()):
+    """Search under the English name, then under each native-script name."""
+    rows, seen = [], set()
+    for nm in [name] + [n for n in native_names if not _latin_same(n, name)]:
+        for r in _harvest_one(nm, birth, age_lo, age_hi, min_px):
+            if r["file_url"] not in seen:
+                seen.add(r["file_url"])
+                rows.append(r)
+    return rows
+
+
+def _latin_same(a, b):
+    # "Tuva Novotny" in de/sv is the same query as in en
+    return _norm(a) == _norm(b)
+
+
+def _harvest_one(name, birth, age_lo, age_hi, min_px=500):
     name = name.split(",")[0].strip()
     by, bm, bd = [int(x) for x in birth.split("-")]
     first = _norm(name).split() or [""]

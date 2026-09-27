@@ -58,7 +58,7 @@ FLICKR_BELOW = 30   # ask Flickr / the web only when Commons is thin for this sl
 USE_WEB = True
 
 
-def harvest_slot(cat, birth, lo, hi, name=None):
+def harvest_slot(cat, birth, lo, hi, name=None, native_names=()):
     """Prefer by-year categories; fall back to metadata scanning.
 
     Network failures propagate on purpose. They used to be caught and printed,
@@ -94,7 +94,7 @@ def harvest_slot(cat, birth, lo, hi, name=None):
             print(f"       flickr: +{len(extra)} candidates for {name}")
         rows += extra
     if name and USE_WEB and len(rows) < FLICKR_BELOW:
-        extra = websearch.harvest(name, birth, lo, hi)
+        extra = websearch.harvest(name, birth, lo, hi, native_names=native_names)
         print(f"       web search: +{len(extra)} dated candidates for {name}")
         rows += extra
     rows.sort(key=prior_rank)
@@ -203,6 +203,8 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
     os.makedirs(cache, exist_ok=True)
     outdir = os.path.join(DATA, slug)
 
+    # the search result carries English labels only; the entity has the rest
+    subj["native_names"] = wikidata_by_qid(subj["qid"]).get("native_names", [])
     father_qid = father_qid or subj.get("father")
     mother_qid = mother_qid or subj.get("mother")
     father = wikidata_by_qid(father_qid) if father_qid else None
@@ -267,7 +269,8 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         cat = p.get("commons_cat") or p["label"]
         print(f"  [{slot}] {p['label']} ({p['birth']}) age {lo}-{hi} cat={cat!r}")
 
-        rows = harvest_slot(cat, p["birth"], lo, hi, name=p["label"])
+        rows = harvest_slot(cat, p["birth"], lo, hi, name=p["label"],
+                            native_names=p.get("native_names", ()))
         rejected = rejected_urls()
         rows = [r for r in rows
                 if r.get("page") not in rejected and r.get("file_url") not in rejected]

@@ -206,6 +206,17 @@ def _person_from_ids(ids, name):
     }
 
 
+# citizenship (P27) -> language whose press to search in; only these, so
+# Western subjects are not searched a second time in Russian for nothing
+NATIVE_BY_COUNTRY = {
+    "Q159": "ru", "Q15180": "ru", "Q34266": "ru",                  # Russia, USSR
+    "Q79": "ar", "Q851": "ar", "Q878": "ar", "Q846": "ar", "Q810": "ar",
+    "Q822": "ar", "Q398": "ar", "Q817": "ar", "Q842": "ar",        # Arab states
+    "Q183": "de", "Q40": "de", "Q39": "de",                         # DE, AT, CH
+    "Q34": "sv",                                                    # Sweden
+}
+
+
 def wikidata_by_qid(qid):
     ent = wd_get(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json")
     e = ent["entities"][qid]
@@ -226,7 +237,21 @@ def wikidata_by_qid(qid):
     img = first("P18")
     ccat = first("P373")
     label = best_label(e, ccat if isinstance(ccat, str) else qid)
-    return {"qid": qid, "label": label,
+    # names as the local press writes them, for web search: "Иван Ургант",
+    # "تميم بن حمد آل ثاني" find photos the English name never does
+    langs = []
+    for c in claims.get("P27", []):
+        cid = (c.get("mainsnak", {}).get("datavalue", {}).get("value") or {}).get("id")
+        if NATIVE_BY_COUNTRY.get(cid) and NATIVE_BY_COUNTRY[cid] not in langs:
+            langs.append(NATIVE_BY_COUNTRY[cid])
+    native = []
+    for lang in langs:
+        v = e.get("labels", {}).get(lang, {}).get("value")
+        if lang == "ru" and v and len(v.split()) == 3:
+            v = f"{v.split()[0]} {v.split()[2]}"     # the press drops the patronymic
+        if v and v != label and v not in native:
+            native.append(v)
+    return {"qid": qid, "label": label, "native_names": native,
             "birth": birth, "death": death,
             "image": img if isinstance(img, str) else None,
             "commons_cat": ccat if isinstance(ccat, str) else None}

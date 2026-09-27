@@ -782,6 +782,293 @@
    "why": "Ahmed Zaki (1949) + Hala Fouad (1958)",
    "batch": 3,
    "country": "Egypt"
+  },
+  {
+   "name": "Alexa Ray Joel",
+   "why": "Billy Joel (1949) + Christie Brinkley (1954)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q3814475"
+  },
+  {
+   "name": "Bijou Phillips",
+   "why": "John Phillips (1935) + Geneviève Waïte (1948)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q45362"
+  },
+  {
+   "name": "Mia Tyler",
+   "why": "Steven Tyler (1948)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q2715743"
+  },
+  {
+   "name": "Elijah Blue Allman",
+   "why": "Cher (1946) + Gregg Allman (1947)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q1329372"
+  },
+  {
+   "name": "Wyatt Russell",
+   "why": "Kurt Russell (1951) + Goldie Hawn (1945)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q15542608"
+  },
+  {
+   "name": "Paige Howard",
+   "why": "Ron Howard (1954)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q11836555"
+  },
+  {
+   "name": "Elizabeth Hanks",
+   "why": "Tom Hanks (1956)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q20993894"
+  },
+  {
+   "name": "Robert Schwartzman",
+   "why": "Talia Shire (1946)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q2001430"
+  },
+  {
+   "name": "Brody Jenner",
+   "why": "Caitlyn Jenner (1949) + Linda Thompson (1950)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q554091"
+  },
+  {
+   "name": "Brandon Jenner",
+   "why": "Caitlyn Jenner (1949) + Linda Thompson (1950)",
+   "batch": 4,
+   "country": "US",
+   "qid": "Q16209581"
+  },
+  {
+   "name": "Luke Walton",
+   "why": "Bill Walton (1952)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q449642"
+  },
+  {
+   "name": "Mike Dunleavy Jr.",
+   "why": "Mike Dunleavy Sr. (1954)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q967630"
+  },
+  {
+   "name": "Patrick Ewing Jr.",
+   "why": "Patrick Ewing (1962)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q1267622"
+  },
+  {
+   "name": "Chris Simms",
+   "why": "Phil Simms (1954)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q5108061"
+  },
+  {
+   "name": "Kellen Winslow II",
+   "why": "Kellen Winslow (1957)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q3194868"
+  },
+  {
+   "name": "Nicolas Prost",
+   "why": "Alain Prost (1955)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q671886"
+  },
+  {
+   "name": "Bruno Senna",
+   "why": "Viviane Senna (1957)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q82864"
+  },
+  {
+   "name": "Rohan Gavaskar",
+   "why": "Sunil Gavaskar (1949)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q3349954"
+  },
+  {
+   "name": "Stuart Broad",
+   "why": "Chris Broad (1957)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q3140358"
+  },
+  {
+   "name": "Frank Lampard",
+   "why": "Frank Lampard Sr. (1948)",
+   "batch": 4,
+   "country": "sport",
+   "qid": "Q41533"
+  },
+  {
+   "name": "Prince Philippos of Greece and Denmark",
+   "why": "Constantine II (1940) + Anne-Marie (1946)",
+   "batch": 4,
+   "country": "royal",
+   "qid": "Q1966130"
+  },
+  {
+   "name": "Laura Smet",
+   "why": "Johnny Hallyday (1943) + Nathalie Baye (1948)",
+   "batch": 4,
+   "country": "France",
+   "qid": "Q465971"
+  },
+  {
+   "name": "Louis Garrel",
+   "why": "Philippe Garrel (1948) + Brigitte Sy (1956)",
+   "batch": 4,
+   "country": "France",
+   "qid": "Q382393"
+  },
+  {
+   "name": "Léa Seydoux",
+   "why": "Henri Seydoux (1960)",
+   "batch": 4,
+   "country": "France",
+   "qid": "Q231096"
+  },
+  {
+   "name": "Arthur Jugnot",
+   "why": "Gérard Jugnot (1951)",
+   "batch": 4,
+   "country": "France",
+   "qid": "Q2865172"
+  },
+  {
+   "name": "Hikaru Utada",
+   "why": "Keiko Fuji (1951)",
+   "batch": 4,
+   "country": "Japan",
+   "qid": "Q234598"
+  },
+  {
+   "name": "Anne Watanabe",
+   "why": "Ken Watanabe (1959)",
+   "batch": 4,
+   "country": "Japan",
+   "qid": "Q1055604"
+  },
+  {
+   "name": "Shinjirō Koizumi",
+   "why": "Junichiro Koizumi (1942)",
+   "batch": 4,
+   "country": "Japan",
+   "qid": "Q661410"
+  },
+  {
+   "name": "Kōtarō Koizumi",
+   "why": "Junichiro Koizumi (1942)",
+   "batch": 4,
+   "country": "Japan",
+   "qid": "Q1036065"
+  },
+  {
+   "name": "Jaycee Chan",
+   "why": "Jackie Chan (1954) + Joan Lin (1953)",
+   "batch": 4,
+   "country": "China",
+   "qid": "Q561310"
+  },
+  {
+   "name": "Nicholas Tse",
+   "why": "Patrick Tse (1936) + Deborah Lee (1958)",
+   "batch": 4,
+   "country": "China",
+   "qid": "Q380579"
+  },
+  {
+   "name": "Shahid Kapoor",
+   "why": "Pankaj Kapur (1954) + Neliima Azeem (1958)",
+   "batch": 4,
+   "country": "India",
+   "qid": "Q319491"
+  },
+  {
+   "name": "Tusshar Kapoor",
+   "why": "Jeetendra (1942)",
+   "batch": 4,
+   "country": "India",
+   "qid": "Q2726352"
+  },
+  {
+   "name": "Vivek Oberoi",
+   "why": "Suresh Oberoi (1946)",
+   "batch": 4,
+   "country": "India",
+   "qid": "Q731854"
+  },
+  {
+   "name": "Sussanne Khan",
+   "why": "Sanjay Khan (1940) + Zarine Khan",
+   "batch": 4,
+   "country": "India",
+   "qid": "Q22301945"
+  },
+  {
+   "name": "Zayed Khan",
+   "why": "Sanjay Khan (1940)",
+   "batch": 4,
+   "country": "India",
+   "qid": "Q167829"
+  },
+  {
+   "name": "Máximo Kirchner",
+   "why": "Néstor Kirchner (1950) + Cristina Fernández (1953)",
+   "batch": 4,
+   "country": "LatAm",
+   "qid": "Q15719117"
+  },
+  {
+   "name": "Carlos Bolsonaro",
+   "why": "Jair Bolsonaro (1955)",
+   "batch": 4,
+   "country": "LatAm",
+   "qid": "Q9696914"
+  },
+  {
+   "name": "Kenji Fujimori",
+   "why": "Alberto Fujimori (1938) + Susana Higuchi (1950)",
+   "batch": 4,
+   "country": "LatAm",
+   "qid": "Q6389326"
+  },
+  {
+   "name": "Wanessa Camargo",
+   "why": "Zezé Di Camargo (1962)",
+   "batch": 4,
+   "country": "LatAm",
+   "qid": "Q145514"
+  },
+  {
+   "name": "Diego Sinagra",
+   "why": "Diego Maradona (1960)",
+   "batch": 4,
+   "country": "LatAm",
+   "qid": "Q1199119"
   }
  ],
  "_note_batch2": "Batch 2 is picked parent-first: parents born ~1935-1963 (63-90 now), so their 40-50 window falls in ~1985-2013, with the child now 40-50."
