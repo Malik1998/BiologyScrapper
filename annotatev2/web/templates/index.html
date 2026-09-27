@@ -11,11 +11,15 @@
 <div class="page">
   <div class="card">
     <h1>Family photos</h1>
-    <p class="muted">Please upload the four photos below. One parent photo is optional if it's not available.</p>
+    <p class="muted">Please upload the four photos below. One parent photo is optional if it's not available. For each person we also need their year of birth, and for each photo the year it was taken.</p>
 
     <label for="in-family">Family / subject name</label>
     <input id="in-family" type="text" autocomplete="off" placeholder="e.g. your last name">
     <p id="family-error" class="err hidden"></p>
+
+    <label for="birth-self">Your year of birth</label>
+    <input id="birth-self" class="year-input" type="number" inputmode="numeric" min="1900" placeholder="e.g. 1985">
+    <p class="hint">Best guess is fine if you're not sure, but exact is better.</p>
     <button id="new-batch" type="button" class="btn btn-ghost">Start a new family (clear this form)</button>
   </div>
 

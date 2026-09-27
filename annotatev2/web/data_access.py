@@ -122,6 +122,8 @@ class Photo:
     crop: Optional[dict]           # {x, y, width, height} in this photo's pixel coords, or None
     face_check: dict               # {"enabled": bool, "passed": bool, "detail": str}
     sync_status: str               # local_only | pending | synced | failed
+    birth_year: Optional[int] = None   # of the person in the photo (None on pre-2026-09 records)
+    photo_year: Optional[int] = None   # when the photo was taken - participant's best guess
     remote_backend: Optional[str] = None
     remote_url: Optional[str] = None
     sync_error: Optional[str] = None
@@ -142,6 +144,8 @@ def save_photo(
     image_bytes: bytes,
     crop: Optional[dict],
     face_check_result,
+    birth_year: int,
+    photo_year: int,
 ) -> Photo:
     """Normalize orientation, write the full photo to local disk, and record
     metadata. Runs synchronously in the request (local disk write is fast);
@@ -179,6 +183,8 @@ def save_photo(
             "detail": face_check_result.detail,
         },
         sync_status="pending" if remote_configured else "local_only",
+        birth_year=birth_year,
+        photo_year=photo_year,
     )
     _atomic_write_json(_photo_json_path(photo_id), asdict(photo))
     return photo
@@ -216,6 +222,18 @@ def update_photo_sync_status(
     photo.remote_url = remote_url or photo.remote_url
     photo.sync_error = error
     _atomic_write_json(_photo_json_path(photo_id), asdict(photo))
+
+
+def update_photo_years(photo_id: str, *, birth_year: int, photo_year: int) -> Optional[Photo]:
+    """Admin edit - lets old records (uploaded before these fields existed)
+    get their years filled in, and fixes typos on new ones."""
+    photo = get_photo(photo_id)
+    if photo is None:
+        return None
+    photo.birth_year = birth_year
+    photo.photo_year = photo_year
+    _atomic_write_json(_photo_json_path(photo_id), asdict(photo))
+    return photo
 
 
 def list_photos(*, submission_id: Optional[str] = None) -> list[Photo]:

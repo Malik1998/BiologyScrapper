@@ -68,6 +68,11 @@ no code changes needed). For each card:
    /admin/photo/<id>/cropped` reconstructs the crop on demand from the two,
    which is also how you'd regenerate it later with different crop
    coordinates if needed.
+4. Enter the year the photo was taken, and the pictured person's year of
+   birth (your own once in the top card; each parent's in their card).
+   Both are required; a best guess is accepted but exact is preferred.
+   Stored on the photo record as `birth_year` / `photo_year`, so
+   `photo_year - birth_year` is the approximate age in the photo.
 
 Re-uploading a slot replaces the previous photo for it. A status line
 tracks completeness (both self photos + at least one parent). Progress is
@@ -86,14 +91,16 @@ contend with each other).
 ```
 data/
   submissions/<submission_id>.json     # family_label, created_at
-  photos/<photo_id>.json               # photo_type, crop, face_check, sync_status, ...
+  photos/<photo_id>.json               # photo_type, crop, birth_year, photo_year, face_check, sync_status, ...
   photos/files/<photo_id>.jpg          # the full photo, EXIF-orientation-corrected
 ```
 
 ## Admin dashboard
 
 `/admin` — lists every submission with its 4 photo thumbnails (rendered
-through the crop-JSON reconstruction) and sync status.
+through the crop-JSON reconstruction) and sync status. Each thumbnail has
+editable "born" / "taken" year fields (`PATCH /admin/photo/<id>`); photos
+uploaded before these fields existed are highlighted until filled in.
 
 **Wide open by default** (no login) as long as `ADMIN_USER`/`ADMIN_PASSWORD`
 in `.env` are blank - a deliberate backdoor so you can eyeball uploads

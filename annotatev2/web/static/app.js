@@ -19,6 +19,7 @@ let cropState = null;            // { box: {left, top, width, height} } in displ
   optionalGroup = data.optional_group;
 
   renderSlots();
+  persistYearInputs();
 
   const familyEl = document.getElementById("in-family");
   const savedFamily = sessionStorage.getItem("family_label");
@@ -33,6 +34,9 @@ let cropState = null;            // { box: {left, top, width, height} } in displ
         for (const p of d.photos) {
           uploadedTypes.add(p.photo_type);
           markSlotSent(p.photo_type);
+          const type = photoTypes.find((t) => t.id === p.photo_type);
+          if (type) setYearInput(`birth-${type.person}`, p.birth_year);
+          setYearInput(`year-${p.photo_type}`, p.photo_year);
         }
       } else {
         submissionId = null; // stale/unknown - a fresh submission is created on submit
@@ -47,6 +51,9 @@ let cropState = null;            // { box: {left, top, width, height} } in displ
     if (!confirm("Start a new family? This clears the current form (already-uploaded photos stay saved on the server).")) return;
     sessionStorage.removeItem("submission_id");
     sessionStorage.removeItem("family_label");
+    for (const key of Object.keys(sessionStorage)) {
+      if (key.startsWith("year_input:")) sessionStorage.removeItem(key);
+    }
     location.reload();
   });
 })();
@@ -60,11 +67,21 @@ function renderSlots() {
     const card = document.createElement("div");
     card.className = "card slot-card";
     card.id = `slot-${type.id}`;
+    // Your own birth year is asked once in the top card; each parent's lives
+    // in their card. The year the photo was taken is per slot.
+    const birthField = type.person === "self" ? "" : `
+      <label for="birth-${type.person}">${capitalize(type.person)}'s year of birth</label>
+      <input id="birth-${type.person}" class="year-input" type="number" inputmode="numeric" min="1900" placeholder="e.g. 1955">
+    `;
     card.innerHTML = `
       <label>${type.label}${type.required ? "" : " (optional)"}</label>
       <p class="hint">${type.hint}</p>
       <div class="slot-preview" id="preview-${type.id}"></div>
       <input type="file" accept="image/*" id="file-${type.id}" class="slot-file-input">
+      ${birthField}
+      <label for="year-${type.id}">Year this photo was taken</label>
+      <input id="year-${type.id}" class="year-input" type="number" inputmode="numeric" min="1900" placeholder="e.g. 2010">
+      <p class="hint">Best guess is fine if you're not sure, but exact is better.</p>
       <p class="slot-status" id="status-${type.id}"></p>
     `;
     container.appendChild(card);
@@ -74,6 +91,49 @@ function renderSlots() {
       e.target.value = ""; // allow picking the same file again later
     });
   }
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// Keep typed years across a page refresh, like the family name.
+function persistYearInputs() {
+  for (const el of document.querySelectorAll(".year-input")) {
+    const key = `year_input:${el.id}`;
+    const saved = sessionStorage.getItem(key);
+    if (saved) el.value = saved;
+    el.addEventListener("input", () => sessionStorage.setItem(key, el.value));
+  }
+}
+
+function setYearInput(id, value) {
+  const el = document.getElementById(id);
+  if (el && !el.value && value) {
+    el.value = value;
+    sessionStorage.setItem(`year_input:${id}`, String(value));
+  }
+}
+
+// Returns {birth_year, photo_year} or throws with a participant-facing message.
+function readYears(photoTypeId) {
+  const type = photoTypes.find((t) => t.id === photoTypeId);
+  const birthRaw = document.getElementById(`birth-${type.person}`).value.trim();
+  const photoRaw = document.getElementById(`year-${photoTypeId}`).value.trim();
+  const thisYear = new Date().getFullYear();
+  const who = type.person === "self" ? "your" : `your ${type.person}'s`;
+  if (!birthRaw) throw new Error(`Please enter ${who} year of birth (a best guess is fine).`);
+  if (!photoRaw) throw new Error("Please enter the year this photo was taken (a best guess is fine).");
+  const birth_year = Number(birthRaw);
+  const photo_year = Number(photoRaw);
+  if (!Number.isInteger(birth_year) || birth_year < 1900 || birth_year > thisYear) {
+    throw new Error(`Year of birth should be a year between 1900 and ${thisYear}.`);
+  }
+  if (!Number.isInteger(photo_year) || photo_year < 1900 || photo_year > thisYear) {
+    throw new Error(`Photo year should be a year between 1900 and ${thisYear}.`);
+  }
+  if (photo_year < birth_year) throw new Error("The photo year can't be before the year of birth.");
+  return { birth_year, photo_year };
 }
 
 function setSlotStatus(photoTypeId, text, kind) {
@@ -289,11 +349,13 @@ async function ensureSubmission() {
   return submissionId;
 }
 
-async function uploadOne(photoTypeId, entry) {
+async function uploadOne(photoTypeId, entry, years) {
   const form = new FormData();
   form.append("submission_id", submissionId);
   form.append("photo_type", photoTypeId);
   form.append("crop", JSON.stringify(entry.crop));
+  form.append("birth_year", String(years.birth_year));
+  form.append("photo_year", String(years.photo_year));
   form.append("image", entry.file, entry.file.name || `${photoTypeId}.jpg`);
 
   const res = await fetch("/api/photos", { method: "POST", body: form });
@@ -312,6 +374,24 @@ document.getElementById("submit-all").addEventListener("click", async () => {
   errEl.classList.add("hidden");
   const btn = document.getElementById("submit-all");
 
+  // Check every pending slot's years up front so nothing half-uploads
+  // because one card is missing a year.
+  const yearsBySlot = {};
+  let missingYears = 0;
+  for (const photoTypeId of Object.keys(pending)) {
+    try {
+      yearsBySlot[photoTypeId] = readYears(photoTypeId);
+    } catch (e) {
+      missingYears += 1;
+      setSlotStatus(photoTypeId, e.message, "err");
+    }
+  }
+  if (missingYears > 0) {
+    errEl.textContent = `Please fill in the years on the highlighted photo(s) - a best guess is fine.`;
+    errEl.classList.remove("hidden");
+    return;
+  }
+
   const sid = await ensureSubmission().catch((e) => {
     errEl.textContent = e.message || String(e);
     errEl.classList.remove("hidden");
@@ -327,7 +407,7 @@ document.getElementById("submit-all").addEventListener("click", async () => {
   for (const [photoTypeId, entry] of entries) {
     setSlotStatus(photoTypeId, "Uploading…", null);
     try {
-      await uploadOne(photoTypeId, entry);
+      await uploadOne(photoTypeId, entry, yearsBySlot[photoTypeId]);
       uploadedTypes.add(photoTypeId);
       delete pending[photoTypeId];
       markSlotSent(photoTypeId);

@@ -18,6 +18,7 @@
   <p class="admin-summary">
     {{ total_photos }} photos across {{ rows|length }} submissions ·
     remote sync backend: <strong>{{ remote_backend }}</strong>
+    {% if missing_years %} · <strong>{{ missing_years }}</strong> photo(s) missing birth/photo year (highlighted - fill in and "Save years"){% endif %}
   </p>
 
   {% for row in rows %}
@@ -34,6 +35,12 @@
           <img src="/admin/photo/{{ photo.id }}/cropped" alt="{{ photo.photo_type }}" loading="lazy">
         </a>
         <div class="thumb-label">{{ photo.photo_type }}{% if photo.sync_status != 'local_only' %} · {{ photo.sync_status }}{% endif %}</div>
+        <form class="year-edit{% if photo.birth_year is none or photo.photo_year is none %} missing{% endif %}" data-photo-id="{{ photo.id }}">
+          <label>born <input type="number" name="birth_year" min="1900" value="{{ photo.birth_year if photo.birth_year is not none else '' }}" required></label>
+          <label>taken <input type="number" name="photo_year" min="1900" value="{{ photo.photo_year if photo.photo_year is not none else '' }}" required></label>
+          <div class="year-edit-age">{% if photo.birth_year is not none and photo.photo_year is not none %}age ≈ {{ photo.photo_year - photo.birth_year }}{% else %}years missing{% endif %}</div>
+          <button type="submit" class="btn btn-ghost btn-small">Save years</button>
+        </form>
         <button class="btn btn-danger btn-small" data-delete-photo="{{ photo.id }}">Delete</button>
       </div>
       {% endfor %}
@@ -60,6 +67,34 @@ document.querySelectorAll("[data-delete-photo]").forEach((btn) => {
     if (await adminDelete(`/admin/photo/${photoId}`)) {
       document.getElementById(`thumb-${photoId}`).remove();
     }
+  });
+});
+
+document.querySelectorAll("form.year-edit").forEach((form) => {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector("button");
+    const body = {
+      birth_year: form.elements.birth_year.value,
+      photo_year: form.elements.photo_year.value,
+    };
+    btn.disabled = true;
+    const res = await fetch(`/admin/photo/${form.dataset.photoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    btn.disabled = false;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert("Save failed: " + (data.detail || res.status));
+      return;
+    }
+    const saved = await res.json();
+    form.classList.remove("missing");
+    form.querySelector(".year-edit-age").textContent = `age ≈ ${saved.photo_year - saved.birth_year}`;
+    btn.textContent = "Saved ✓";
+    setTimeout(() => { btn.textContent = "Save years"; }, 1500);
   });
 });
 

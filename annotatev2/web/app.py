@@ -16,6 +16,7 @@ import logging
 import os
 import secrets
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -105,7 +106,23 @@ def api_submission_photos(submission_id: str):
     if submission is None:
         raise HTTPException(404, "unknown submission")
     photos = data_access.list_photos(submission_id=submission_id)
-    return {"photos": [{"photo_id": p.id, "photo_type": p.photo_type} for p in photos]}
+    return {"photos": [
+        {"photo_id": p.id, "photo_type": p.photo_type, "birth_year": p.birth_year, "photo_year": p.photo_year}
+        for p in photos
+    ]}
+
+
+MIN_YEAR = 1900
+
+
+def _validate_years(birth_year: int, photo_year: int) -> None:
+    this_year = datetime.now().year
+    if not MIN_YEAR <= birth_year <= this_year:
+        raise HTTPException(400, f"birth_year must be between {MIN_YEAR} and {this_year}")
+    if not MIN_YEAR <= photo_year <= this_year:
+        raise HTTPException(400, f"photo_year must be between {MIN_YEAR} and {this_year}")
+    if photo_year < birth_year:
+        raise HTTPException(400, "photo_year can't be before birth_year")
 
 
 @app.post("/api/photos")
@@ -114,6 +131,8 @@ async def api_upload_photo(
     submission_id: str = Form(...),
     photo_type: str = Form(...),
     crop: str = Form(...),  # JSON string: {x, y, width, height}
+    birth_year: int = Form(...),   # of the person in the photo
+    photo_year: int = Form(...),   # approximate year the photo was taken
     image: UploadFile = File(...),
 ):
     submission = data_access.get_submission(submission_id)
@@ -123,6 +142,8 @@ async def api_upload_photo(
     valid_types = {p["id"] for p in data_access.load_photo_types()}
     if photo_type not in valid_types:
         raise HTTPException(400, f"unknown photo_type {photo_type!r}")
+
+    _validate_years(birth_year, photo_year)
 
     if image.content_type not in config.ALLOWED_CONTENT_TYPES:
         raise HTTPException(400, f"unsupported content type {image.content_type!r}")
@@ -160,6 +181,8 @@ async def api_upload_photo(
             image_bytes=image_bytes,
             crop=crop_data,
             face_check_result=face_result,
+            birth_year=birth_year,
+            photo_year=photo_year,
         )
     except Exception:
         logger.exception("failed to save photo for submission %s photo_type %s", submission_id, photo_type)
@@ -206,6 +229,7 @@ def admin_page(request: Request, _: None = Depends(require_admin)):
     return templates.TemplateResponse(request, "admin.html", {
         "rows": rows,
         "total_photos": len(all_photos),
+        "missing_years": sum(1 for p in all_photos if p.birth_year is None or p.photo_year is None),
         "remote_backend": config.REMOTE_STORAGE_BACKEND,
         "is_open": not (config.ADMIN_USER and config.ADMIN_PASSWORD),
     })
@@ -229,6 +253,20 @@ def admin_photo_cropped(photo_id: str, _: None = Depends(require_admin)):
     except FileNotFoundError:
         raise HTTPException(404)
     return Response(content=data, media_type="image/jpeg")
+
+
+@app.patch("/admin/photo/{photo_id}")
+def admin_update_photo_years(photo_id: str, payload: dict, _: None = Depends(require_admin)):
+    try:
+        birth_year = int(payload["birth_year"])
+        photo_year = int(payload["photo_year"])
+    except (KeyError, TypeError, ValueError):
+        raise HTTPException(400, "birth_year and photo_year must be integers")
+    _validate_years(birth_year, photo_year)
+    photo = data_access.update_photo_years(photo_id, birth_year=birth_year, photo_year=photo_year)
+    if photo is None:
+        raise HTTPException(404)
+    return {"photo_id": photo.id, "birth_year": photo.birth_year, "photo_year": photo.photo_year}
 
 
 @app.delete("/admin/photo/{photo_id}")

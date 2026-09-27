@@ -196,6 +196,12 @@ input:focus { outline: none; border-color: #2563eb; }
 .thumb { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; width: 110px; }
 .thumb img { width: 110px; height: 110px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
 .thumb-label { font-size: 0.7rem; color: #94a3b8; text-align: center; }
+.year-edit { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; padding: 0.3rem; border-radius: 8px; }
+.year-edit.missing { background: #fef9c3; }
+.year-edit label { display: flex; justify-content: space-between; align-items: center; gap: 0.3rem; font-size: 0.7rem; font-weight: 500; color: #64748b; }
+.year-edit input { width: 62px; font-size: 0.8rem; padding: 0.15rem 0.3rem; border: 1px solid #cbd5e1; border-radius: 6px; }
+.year-edit-age { font-size: 0.7rem; color: #64748b; text-align: center; }
+.year-edit.missing .year-edit-age { color: #a16207; font-weight: 600; }
 .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .btn-danger:active { background: #fee2e2; }
 .btn-small { padding: 0.3rem 0.6rem; font-size: 0.78rem; border-radius: 8px; }
