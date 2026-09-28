@@ -137,6 +137,16 @@ def _embed_main_face(path):
     det = F.detector((w, h))
     _, faces = det.detect(img)
     if faces is None or len(faces) == 0:
+        # a tight head-and-shoulders crop (Jamie Lee Curtis's P18) fills the
+        # frame and YuNet finds nothing; with a border and at a smaller scale
+        # the same face is detected
+        pad = int(0.3 * max(h, w))
+        img = cv2.copyMakeBorder(img, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=(127, 127, 127))
+        k = 640 / max(img.shape[:2])
+        img = cv2.resize(img, None, fx=k, fy=k)
+        h, w = img.shape[:2]
+        _, faces = F.detector((w, h)).detect(img)
+    if faces is None or len(faces) == 0:
         return None, None
     cx, cy = w / 2.0, h / 2.0
 
