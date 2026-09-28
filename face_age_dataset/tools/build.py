@@ -16,6 +16,7 @@ import commons as C
 import flickr
 import websearch
 from review_web import rejected_urls
+from licensing import tag as tag_licence
 import face as F
 from identity import (wikidata_person, wikidata_by_qid, commons_download,
                       embed_faces)
@@ -69,7 +70,7 @@ USE_WEB = True
 DEPICTS_BELOW = 50   # also ask Commons structured data when categories are thin
 
 
-def harvest_slot(cat, birth, lo, hi, name=None, native_names=(), qid=None):
+def harvest_slot(cat, birth, lo, hi, name=None, native_names=(), qid=None, use_web=True):
     """Prefer by-year categories; fall back to metadata scanning.
 
     Network failures propagate on purpose. They used to be caught and printed,
@@ -113,7 +114,7 @@ def harvest_slot(cat, birth, lo, hi, name=None, native_names=(), qid=None):
         if extra:
             print(f"       flickr: +{len(extra)} candidates for {name}")
         rows += extra
-    if name and USE_WEB and len(rows) < FLICKR_BELOW:
+    if name and USE_WEB and use_web and len(rows) < FLICKR_BELOW:
         extra = websearch.harvest(name, birth, lo, hi, native_names=native_names)
         print(f"       web search: +{len(extra)} dated candidates for {name}")
         rows += extra
@@ -201,7 +202,7 @@ def crop_face(src, box, dest, pad=0.55):
 
 
 def build_person(name, slug=None, top=60, qid=None, father_qid=None,
-                 mother_qid=None):
+                 mother_qid=None, web_slots=None):
     """Build or complete one person.
 
     Slots already filled in an existing meta.json are kept as they are, so a
@@ -290,7 +291,10 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         print(f"  [{slot}] {p['label']} ({p['birth']}) age {lo}-{hi} cat={cat!r}")
 
         rows = harvest_slot(cat, p["birth"], lo, hi, name=p["label"],
-                            native_names=p.get("native_names", ()), qid=p.get("qid"))
+                            native_names=p.get("native_names", ()), qid=p.get("qid"),
+                            # web picks cost a visual review each: spend them only
+                            # where one photo completes a minimum set
+                            use_web=web_slots is None or slot in web_slots)
         rejected = rejected_urls()
         rows = [r for r in rows
                 if r.get("page") not in rejected and r.get("file_url") not in rejected]
@@ -397,6 +401,12 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
                                and meta["slots"]["subject_young"].get("status") == "ok"
                                and any(meta["slots"][k].get("status") == "ok"
                                        for k in ("father_40s", "mother_40s")))
+    pub = set()
+    for k, e in meta["slots"].items():
+        if e.get("status") == "ok" and tag_licence(e)["publishable"]:
+            pub.add(k)
+    meta["publishable_minimum_set"] = ({"subject_now", "subject_young"} <= pub
+                                       and bool(pub & {"father_40s", "mother_40s"}))
     if ok:
         os.makedirs(outdir, exist_ok=True)
         json.dump(meta, open(os.path.join(outdir, "meta.json"), "w"),

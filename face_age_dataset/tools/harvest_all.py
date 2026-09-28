@@ -78,7 +78,8 @@ def one(name, state, top, spec=None):
     try:
         meta = build_person(name, top=top, qid=spec.get("qid"),
                             father_qid=spec.get("father_qid"),
-                            mother_qid=spec.get("mother_qid"))
+                            mother_qid=spec.get("mother_qid"),
+                            web_slots=spec.get("web_slots"))
         if not meta:
             return name, {"status": "unresolved"}
         return name, {
@@ -112,6 +113,9 @@ def main():
                     help="re-run everyone without all 4 slots; filled slots are kept")
     ap.add_argument("--candidates", metavar="JSON",
                     help="also build people from candidates.py output (best first)")
+    ap.add_argument("--fill-one-short", action="store_true",
+                    help="only people one photo short of a minimum set; web search "
+                         "only for that missing slot")
     ap.add_argument("--only-new", action="store_true",
                     help="with --candidates: skip the seed list")
     ap.add_argument("--max-new", type=int, default=0,
@@ -121,6 +125,27 @@ def main():
     seed = json.load(open(os.path.join(os.path.dirname(__file__), "seed_people.json")))
     specs = {p["name"]: p for p in seed["people"]}
     names = args.names or [p["name"] for p in seed["people"]]
+    if args.fill_one_short:
+        names = []
+        for mp in sorted(glob.glob(os.path.join(DATA, "*", "meta.json"))):
+            m = json.load(open(mp))
+            if m.get("has_minimum_set"):
+                continue
+            sl = m["slots"]
+            ok = lambda k: sl.get(k, {}).get("status") == "ok"
+            have = {"subject_now": ok("subject_now"), "subject_young": ok("subject_young"),
+                    "parent": ok("father_40s") or ok("mother_40s")}
+            if sum(have.values()) != 2:
+                continue
+            miss = [k for k, v in have.items() if not v][0]
+            web = {"father_40s", "mother_40s"} if miss == "parent" else {miss}
+            nm = m.get("query_name") or m["subject"]["name"]
+            specs[nm] = {"name": nm, "qid": m["subject"]["qid"],
+                         "father_qid": (m.get("father") or {}).get("qid"),
+                         "mother_qid": (m.get("mother") or {}).get("qid"),
+                         "web_slots": web}
+            names.append(nm)
+        print(f"{len(names)} people one photo short of a minimum set", flush=True)
     if args.candidates and args.only_new:
         names = list(args.names)
     if args.candidates:
@@ -152,7 +177,9 @@ def main():
                                                          overwrite=args.retry_missing)
     if not args.redo:
         save_state(state)
-    if args.retry_missing:
+    if args.fill_one_short:
+        todo = list(names)
+    elif args.retry_missing:
         todo = [n for n in names
                 if (state.get(n) or {}).get("complete_slots", 0) < 4]
     else:

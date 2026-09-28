@@ -56,7 +56,7 @@ YEAR = re.compile(r"(?<!\d)(19[5-9]\d|20[0-4]\d)(?!\d)")
 
 _last = [0.0]
 _lock = threading.Lock()
-GAP = 2.0
+GAP = 1.5
 PER_QUERY = 40
 
 
