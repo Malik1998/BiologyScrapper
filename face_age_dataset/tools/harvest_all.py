@@ -6,6 +6,7 @@ request rate. Processes would each get their own budget and hammer the API.
 """
 
 import argparse
+import glob
 import json
 import os
 import sys
@@ -109,11 +110,33 @@ def main():
                     help="do not fall back to web image search")
     ap.add_argument("--retry-missing", action="store_true",
                     help="re-run everyone without all 4 slots; filled slots are kept")
+    ap.add_argument("--candidates", metavar="JSON",
+                    help="also build people from candidates.py output (best first)")
+    ap.add_argument("--only-new", action="store_true",
+                    help="with --candidates: skip the seed list")
+    ap.add_argument("--max-new", type=int, default=0,
+                    help="with --candidates: take at most this many new people")
     args = ap.parse_args()
 
     seed = json.load(open(os.path.join(os.path.dirname(__file__), "seed_people.json")))
     specs = {p["name"]: p for p in seed["people"]}
     names = args.names or [p["name"] for p in seed["people"]]
+    if args.candidates and args.only_new:
+        names = list(args.names)
+    if args.candidates:
+        # skip anyone already built or seeded, whatever name they were asked by
+        known = {p.get("qid") for p in seed["people"]}
+        for mp in glob.glob(os.path.join(DATA, "*", "meta.json")):
+            known.add((json.load(open(mp)).get("subject") or {}).get("qid"))
+        new = [c for c in json.load(open(args.candidates)) if c["qid"] not in known]
+        if args.max_new:
+            new = new[:args.max_new]
+        for c in new:
+            specs[c["name"]] = {"name": c["name"], "qid": c["qid"],
+                                "father_qid": (c.get("father") or {}).get("qid"),
+                                "mother_qid": (c.get("mother") or {}).get("qid")}
+            names.append(c["name"])
+        print(f"+{len(new)} new people from {args.candidates}", flush=True)
     if args.limit:
         names = names[:args.limit]
 

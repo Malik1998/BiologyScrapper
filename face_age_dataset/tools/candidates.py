@@ -6,6 +6,7 @@ reference portraits, so we let Wikidata filter on exactly that.
 """
 
 import json
+import os
 import sys
 import urllib.parse
 import urllib.request
@@ -15,35 +16,32 @@ ENDPOINT = "https://query.wikidata.org/sparql"
 UA = "faces-dataset/0.2 (https://github.com/Malik1998/BiologyScrapper; research dataset build)"
 THIS_YEAR = date.today().year
 
+# Subjects born %d-%d: old enough to have been photographed at 40-50 at some
+# point, young enough that their 20s fall in the era of dated digital photos.
+# Being 40-50 *now* is not required -- the subject_now slot only needs a
+# photo taken at 40-50.
+# One query per parent role with the parent REQUIRED: that join is small and
+# drives the plan. OPTIONAL parents made WDQS scan every dated human (504).
 QUERY = """
-SELECT ?p ?pLabel ?dob ?cat ?sl
-       ?f ?fLabel ?fdob ?fcat
-       ?m ?mLabel ?mdob ?mcat
+SELECT ?p ?pLabel ?dob ?cat ?sl ?x ?xLabel ?xdob ?xcat
 WHERE {
-  ?p wdt:P31 wd:Q5 ;
-     wdt:P569 ?dob ;
-     wdt:P373 ?cat ;
-     wikibase:sitelinks ?sl .
+  ?p wdt:%s ?x .
+  ?x wdt:P373 ?xcat ; wdt:P569 ?xdob .
+  ?p wdt:P373 ?cat ; wdt:P569 ?dob ; wikibase:sitelinks ?sl .
   FILTER(YEAR(?dob) >= %d && YEAR(?dob) <= %d)
-  FILTER(?sl >= 40)
-  OPTIONAL { ?p wdt:P22 ?f . ?f wdt:P569 ?fdob ; wdt:P373 ?fcat . }
-  OPTIONAL { ?p wdt:P25 ?m . ?m wdt:P569 ?mdob ; wdt:P373 ?mcat . }
-  FILTER(BOUND(?f) || BOUND(?m))
+  FILTER(?sl >= %d)
+  ?p wdt:P31 wd:Q5 .
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }
-ORDER BY DESC(?sl)
-LIMIT 300
 """
 
 
-def run_query(age_lo=40, age_hi=50):
+def run_query(born_lo=1950, born_hi=1985, min_sitelinks=8, prop="P22"):
     import time
-    born_hi = THIS_YEAR - age_lo     # youngest allowed
-    born_lo = THIS_YEAR - age_hi     # oldest allowed
-    q = QUERY % (born_lo, born_hi)
+    q = QUERY % (prop, born_lo, born_hi, min_sitelinks)
     body = urllib.parse.urlencode({"query": q, "format": "json"}).encode()
     last = None
-    for attempt in range(6):
+    for attempt in range(4):
         try:
             req = urllib.request.Request(
                 ENDPOINT, data=body,
@@ -56,7 +54,7 @@ def run_query(age_lo=40, age_hi=50):
             last = e
             # WDQS throttles to 1 req/min during outages; just wait it out
             wait = 65 if e.code == 429 else 20
-            print(f"  WDQS {e.code}, retry in {wait}s ({attempt + 1}/6)", flush=True)
+            print(f"  WDQS {e.code}, retry in {wait}s ({attempt + 1}/4)", flush=True)
             time.sleep(wait)
         except Exception as e:
             last = e
@@ -83,55 +81,89 @@ def parent_ok(pdob, subject_age_now):
     return lo_year <= THIS_YEAR, (lo_year, min(hi_year, THIS_YEAR))
 
 
-def collect(age_lo=40, age_hi=50):
-    data = run_query(age_lo, age_hi)
+def collect(born_lo=1950, born_hi=1985, min_sitelinks=8):
     rows = {}
-    for b in data["results"]["bindings"]:
-        qid = b["p"]["value"].rsplit("/", 1)[-1]
-        dob = b["dob"]["value"]
-        by = year_of(dob)
-        if not by:
-            continue
-        rec = rows.setdefault(qid, {
-            "qid": qid,
-            "name": b["pLabel"]["value"],
-            "birth": dob[:10],
-            "age_now": THIS_YEAR - by,
-            "sitelinks": int(b["sl"]["value"]),
-            "commons_cat": b["cat"]["value"],
-            "father": None, "mother": None,
-        })
-        for role, pre in (("father", "f"), ("mother", "m")):
-            if pre in b and rec[role] is None:
-                pdob = b[pre + "dob"]["value"]
-                ok, window = parent_ok(pdob, rec["age_now"])
+    for role, prop in (("father", "P22"), ("mother", "P25")):
+        bindings = run_query(born_lo, born_hi, min_sitelinks, prop)["results"]["bindings"]
+        print(f"  {role}: {len(bindings)} rows", flush=True)
+        for b in bindings:
+            qid = b["p"]["value"].rsplit("/", 1)[-1]
+            dob = b["dob"]["value"]
+            if not year_of(dob):
+                continue
+            rec = rows.setdefault(qid, {
+                "qid": qid,
+                "name": b["pLabel"]["value"],
+                "birth": dob[:10],
+                "sitelinks": int(b["sl"]["value"]),
+                "commons_cat": b["cat"]["value"],
+                "father": None, "mother": None,
+            })
+            if rec[role] is None:
+                pdob = b["xdob"]["value"]
+                ok, window = parent_ok(pdob, None)
                 rec[role] = {
-                    "qid": b[pre]["value"].rsplit("/", 1)[-1],
-                    "name": b[pre + "Label"]["value"],
+                    "qid": b["x"]["value"].rsplit("/", 1)[-1],
+                    "name": b["xLabel"]["value"],
                     "birth": pdob[:10],
-                    "commons_cat": b[pre + "cat"]["value"],
+                    "commons_cat": b["xcat"]["value"],
                     "window_40_50": window,
                     "feasible": ok,
                 }
+    out = [r for r in rows.values()
+           if any(x and x["feasible"] for x in (r["father"], r["mother"]))
+           and not r["name"].startswith("Q")]          # no English label
+    return out
+
+
+def category_sizes(cats):
+    """files + subcategories per Commons category, 50 titles per request."""
+    sys.path.insert(0, os.path.dirname(__file__))
+    import commons as C
+    sizes, cats = {}, sorted(set(cats))
+    for i in range(0, len(cats), 50):
+        batch = ["Category:" + c for c in cats[i:i + 50]]
+        d = C.api(action="query", titles="|".join(batch), prop="categoryinfo", redirects="1")
+        back = {r["to"]: r["from"] for r in d.get("query", {}).get("redirects", [])}
+        for p in d.get("query", {}).get("pages", []):
+            ci = p.get("categoryinfo") or {}
+            t = back.get(p["title"], p["title"])[len("Category:"):]
+            # a subcategory of a person is usually a year or an event: count it
+            # as several files
+            sizes[t] = ci.get("files", 0) + 10 * ci.get("subcats", 0)
+    return sizes
+
+
+def rank(cands, min_subject=15, min_parent=8):
+    """Keep people whose own and whose parent's categories are big enough to
+    plausibly hold dated photos at the ages we need; best-covered first."""
+    cats = [c["commons_cat"] for c in cands]
+    for c in cands:
+        cats += [p["commons_cat"] for p in (c["father"], c["mother"]) if p]
+    sz = category_sizes(cats)
     out = []
-    for r in rows.values():
-        if not (age_lo <= r["age_now"] <= age_hi):
-            continue
-        feas = [x for x in (r["father"], r["mother"]) if x and x["feasible"]]
-        if not feas:
-            continue
-        r["feasible_parents"] = len(feas)
-        out.append(r)
-    out.sort(key=lambda r: -r["sitelinks"])
+    for c in cands:
+        s = sz.get(c["commons_cat"], 0)
+        par = [(sz.get(p["commons_cat"], 0), p) for p in (c["father"], c["mother"])
+               if p and p["feasible"]]
+        best = max((x for x, _ in par), default=0)
+        c["subject_size"], c["parent_size"] = s, best
+        if s >= min_subject and best >= min_parent:
+            c["score"] = min(s, 300) * min(best, 300)
+            out.append(c)
+    out.sort(key=lambda c: -c["score"])
     return out
 
 
 if __name__ == "__main__":
-    res = collect()
-    json.dump(res, open(sys.argv[1] if len(sys.argv) > 1 else "work/candidates.json", "w"),
-              ensure_ascii=False, indent=1)
-    print(f"{len(res)} candidates\n")
-    for r in res[:60]:
+    import os
+    out_path = sys.argv[1] if len(sys.argv) > 1 else "work/candidates.json"
+    cands = collect()
+    print(f"{len(cands)} people with a parent on Commons")
+    ranked = rank(cands)
+    json.dump(ranked, open(out_path, "w"), ensure_ascii=False, indent=1)
+    print(f"{len(ranked)} with big enough categories -> {out_path}\n")
+    for r in ranked[:40]:
         ps = " + ".join(f"{p['name']}({p['birth'][:4]})"
                         for p in (r["father"], r["mother"]) if p and p["feasible"])
-        print(f"{r['sitelinks']:4d}  {r['name']:<28} {r['age_now']}  <- {ps}")
+        print(f"{r['subject_size']:5d} {r['parent_size']:5d}  {r['name']:<28} {r['birth'][:4]}  <- {ps}")

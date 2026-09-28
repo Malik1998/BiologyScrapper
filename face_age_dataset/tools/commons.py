@@ -5,6 +5,7 @@ so "age on this photo" is arithmetic instead of a guess.
 """
 
 import json
+import os
 import re
 import sys
 import time
@@ -48,10 +49,39 @@ def _wait_turn(last, lock, gap_s):
         last[0] = time.time()
 
 
+CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "work", "commons_cache")
+
+
+def _cacheable(params):
+    # file lists and file metadata: stable, and shared between siblings --
+    # five Bush children each re-listed their father's thousands of files
+    return (params.get("list") in ("categorymembers", "search")
+            or params.get("prop") in ("imageinfo", "categoryinfo"))
+
+
 def api(**params):
     params.setdefault("format", "json")
     params.setdefault("formatversion", "2")
-    body = urllib.parse.urlencode(params).encode()
+    body = urllib.parse.urlencode(sorted(params.items())).encode()
+    cp = None
+    if _cacheable(params):
+        import hashlib
+        cp = os.path.join(CACHE_DIR, hashlib.sha1(body).hexdigest() + ".json")
+        if os.path.exists(cp):
+            try:
+                return json.load(open(cp))
+            except Exception:
+                pass
+    data = _api_fetch(body)
+    if cp:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        tmp = cp + f".{threading.get_ident()}.tmp"
+        json.dump(data, open(tmp, "w"))
+        os.replace(tmp, cp)
+    return data
+
+
+def _api_fetch(body):
     for attempt in range(len(BACKOFF) + 1):
         _wait_turn(_last_call, _api_lock, MIN_GAP)
         req = urllib.request.Request(
@@ -259,9 +289,53 @@ def age_on(birth, taken):
 
 
 def harvest(category, birth, age_lo, age_hi, depth=1, min_px=600):
+    return harvest_titles(category_files(category, depth=depth), birth, age_lo, age_hi, min_px)
+
+
+def depicts_files(qid, limit=500):
+    """Files whose structured data says they depict `qid` (P180).
+
+    Many photos of a person are tagged "depicts" but never put in the person's
+    category -- and for 112 of 705 people and parents the category did not
+    exist at all, which left Commons contributing nothing.
+    """
+    titles, cont = [], {}
+    while len(titles) < limit:
+        d = api(action="query", list="search", srnamespace="6", srlimit="500",
+                srsearch=f"haswbstatement:P180={qid}", **cont)
+        titles += [r["title"] for r in d.get("query", {}).get("search", [])]
+        if "continue" not in d:
+            break
+        cont = d["continue"]
+    return titles[:limit]
+
+
+def resolve_category(cat):
+    """The category files really live in, or None if there is none.
+
+    Wikidata's P373 can name a redirect or a category that was never created;
+    both list nothing, and the person looked unphotographed.
+    """
+    title = cat if cat.startswith("Category:") else "Category:" + cat
+    for _ in range(3):
+        d = api(action="query", titles=title, redirects="1", prop="categoryinfo|revisions",
+                rvprop="content", rvslots="main")
+        pages = d.get("query", {}).get("pages", [])
+        if not pages or pages[0].get("missing"):
+            return None
+        pg = pages[0]
+        text = ((pg.get("revisions") or [{}])[0].get("slots", {}).get("main", {}).get("content") or "")
+        m = re.search(r"\{\{\s*(?:Category redirect|Seecat|Categoryredirect)\s*\|\s*(?:Category:)?([^|}]+)", text, re.I)
+        if m:
+            title = "Category:" + m.group(1).strip()
+            continue
+        return pg["title"][len("Category:"):]
+    return None
+
+
+def harvest_titles(titles, birth, age_lo, age_hi, min_px=600):
     by, bm, bd = [int(x) for x in birth.split("-")]
-    titles = category_files(category, depth=depth)
-    info = imageinfo(titles)
+    info = imageinfo(list(dict.fromkeys(titles)))
     rows = []
     for t, ii in info.items():
         if not str(ii.get("mime", "")).startswith("image/"):
@@ -301,7 +375,7 @@ def harvest(category, birth, age_lo, age_hi, depth=1, min_px=600):
 YEAR_CAT = re.compile(r"\bin (\d{4})\b")
 
 
-def harvest_by_year(person_cat, birth, age_lo, age_hi, min_px=600):
+def harvest_by_year(person_cat, birth, age_lo, age_hi, min_px=600, by_year_cat=None):
     """Harvest via 'X by year' subcategories.
 
     The year comes from the category name, which curators assign from the event
@@ -310,7 +384,7 @@ def harvest_by_year(person_cat, birth, age_lo, age_hi, min_px=600):
     by, bm, bd = [int(x) for x in birth.split("-")]
     base = person_cat if person_cat.startswith("Category:") else "Category:" + person_cat
     d = api(action="query", list="categorymembers",
-            cmtitle=base + " by year", cmtype="subcat", cmlimit=200)
+            cmtitle=by_year_cat or base + " by year", cmtype="subcat", cmlimit=200)
     year_cats = []
     for m in d.get("query", {}).get("categorymembers", []):
         mt = YEAR_CAT.search(m["title"])

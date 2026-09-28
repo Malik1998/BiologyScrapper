@@ -30,10 +30,18 @@ THRESH = {"subject_now": 0.32, "subject_young": 0.24,
           "father_40s": 0.30, "mother_40s": 0.30}
 
 
-def has_by_year(cat):
-    d = C.api(action="query", titles=f"Category:{cat} by year", prop="info")
-    pages = d.get("query", {}).get("pages", [])
-    return bool(pages) and not pages[0].get("missing")
+def by_year_category(cat):
+    """The person's "... by year" subcategory, whatever its exact name.
+
+    "Philippe of Belgium" holds "Philippe I of Belgium by year": looking only
+    for "<cat> by year" found nothing, and the king got no photos at all.
+    """
+    d = C.api(action="query", list="categorymembers", cmtitle=f"Category:{cat}",
+              cmtype="subcat", cmlimit="500")
+    for m in d.get("query", {}).get("categorymembers", []):
+        if m["title"].endswith(" by year"):
+            return m["title"]
+    return None
 
 
 PORTRAIT_HINT = ("portrait", "official", "headshot", "close-up", "closeup", "mugshot")
@@ -58,7 +66,10 @@ FLICKR_BELOW = 30   # ask Flickr / the web only when Commons is thin for this sl
 USE_WEB = True
 
 
-def harvest_slot(cat, birth, lo, hi, name=None, native_names=()):
+DEPICTS_BELOW = 50   # also ask Commons structured data when categories are thin
+
+
+def harvest_slot(cat, birth, lo, hi, name=None, native_names=(), qid=None):
     """Prefer by-year categories; fall back to metadata scanning.
 
     Network failures propagate on purpose. They used to be caught and printed,
@@ -66,17 +77,26 @@ def harvest_slot(cat, birth, lo, hi, name=None, native_names=()):
     30 slots in one run, Nico Rosberg's 105 candidates among them.
     """
     rows = []
-    if has_by_year(cat):
-        rows = C.harvest_by_year(cat, birth, lo, hi)
+    cat = C.resolve_category(cat) if cat else None
+    byc = by_year_category(cat) if cat else None
+    if byc:
+        rows = C.harvest_by_year(cat, birth, lo, hi, by_year_cat=byc)
     # By-year categories can be small AND polluted -- Charles III's 1990s years
     # are mostly commemorative plaques he unveiled, not photos of him. A low
     # threshold here silently suppressed the far richer flat harvest.
-    if len(rows) < 50:
+    if cat and len(rows) < 50:
         more = C.harvest(cat, birth, lo, hi, depth=1)
         seen = {r["title"] for r in rows}
         rows += [m for m in more if m["title"] not in seen]
+    if qid and len(rows) < DEPICTS_BELOW:
+        more = C.harvest_titles(C.depicts_files(qid), birth, lo, hi)
+        seen = {r["title"] for r in rows}
+        more = [m for m in more if m["title"] not in seen]
+        if more:
+            print(f"       depicts: +{len(more)} dated candidates")
+        rows += more
     # dedicated portrait categories are where the well-framed faces live
-    for suffix in (" portraits", " official portraits"):
+    for suffix in ((" portraits", " official portraits") if cat else ()):
         # a missing category just lists nothing, so no try/except needed
         extra = C.harvest(cat + suffix, birth, lo, hi, depth=1)
         seen = {r["title"] for r in rows}
@@ -270,7 +290,7 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         print(f"  [{slot}] {p['label']} ({p['birth']}) age {lo}-{hi} cat={cat!r}")
 
         rows = harvest_slot(cat, p["birth"], lo, hi, name=p["label"],
-                            native_names=p.get("native_names", ()))
+                            native_names=p.get("native_names", ()), qid=p.get("qid"))
         rejected = rejected_urls()
         rows = [r for r in rows
                 if r.get("page") not in rejected and r.get("file_url") not in rejected]
