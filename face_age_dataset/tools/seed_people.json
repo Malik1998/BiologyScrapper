@@ -1637,9 +1637,319 @@
    "batch": 6,
    "country": "China",
    "qid": "Q698411"
+  },
+  {
+   "name": "Dale Earnhardt Jr.",
+   "why": "Dale Earnhardt (1951)",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q355388"
+  },
+  {
+   "name": "Michael Andretti",
+   "why": "Mario Andretti (1940)",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q171519"
+  },
+  {
+   "name": "Al Unser Jr.",
+   "why": "Al Unser (1939)",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q719173"
+  },
+  {
+   "name": "Damon Hill",
+   "why": "Graham Hill (1929)",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q10505"
+  },
+  {
+   "name": "Jordi Cruyff",
+   "why": "Johan Cruyff (1947)",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q294593"
+  },
+  {
+   "name": "Jamie Redknapp",
+   "why": "Harry Redknapp (1947) + Sandra Redknapp ()",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q317810"
+  },
+  {
+   "name": "Darren Ferguson",
+   "why": "Alex Ferguson (1941)",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q513167"
+  },
+  {
+   "name": "Brent Barry",
+   "why": "Rick Barry (1944) + Pam Hale ()",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q472790"
+  },
+  {
+   "name": "Brian Griese",
+   "why": "Bob Griese (1945); not linked in Wikidata",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q2924911",
+   "father_qid": "Q429424"
+  },
+  {
+   "name": "Brett Hull",
+   "why": "Bobby Hull (1939)",
+   "batch": 7,
+   "country": "Sport",
+   "qid": "Q440363"
+  },
+  {
+   "name": "Andrew Cuomo",
+   "why": "Mario Cuomo (1932) + Matilda Cuomo (1931)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q11673"
+  },
+  {
+   "name": "Chris Cuomo",
+   "why": "Mario Cuomo (1932) + Matilda Cuomo (1931)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q5112179"
+  },
+  {
+   "name": "Rand Paul",
+   "why": "Ron Paul (1935)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q463557"
+  },
+  {
+   "name": "Hunter Biden",
+   "why": "Joe Biden (1942) + Neilia Hunter (1942)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q5944264"
+  },
+  {
+   "name": "Patrick J. Kennedy",
+   "why": "Ted Kennedy (1932) + Joan Bennett Kennedy (1936)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q948920"
+  },
+  {
+   "name": "Caroline Kennedy",
+   "why": "John F. Kennedy (1917) + Jacqueline Kennedy Onassis (1929)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q230303"
+  },
+  {
+   "name": "Justin Trudeau",
+   "why": "Pierre Trudeau (1919) + Margaret Trudeau (1948)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q3099714"
+  },
+  {
+   "name": "Boris Johnson",
+   "why": "Stanley Johnson (1940) + Charlotte Johnson Wahl (1942)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q180589"
+  },
+  {
+   "name": "Stephen Kinnock",
+   "why": "Neil Kinnock (1942) + Glenys Kinnock, Baroness Kinnock of Holyhead (1944)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q3377178"
+  },
+  {
+   "name": "Zac Goldsmith",
+   "why": "James Goldsmith (1933) + Annabel Goldsmith (1934)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q391562"
+  },
+  {
+   "name": "Keiko Fujimori",
+   "why": "Alberto Fujimori (1938) + Susana Higuchi (1950)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q235137"
+  },
+  {
+   "name": "Benazir Bhutto",
+   "why": "Zulfikar Ali Bhutto (1928) + Nusrat Bhutto (1929)",
+   "batch": 7,
+   "country": "Politics",
+   "qid": "Q34413"
+  },
+  {
+   "name": "Jakob Dylan",
+   "why": "Bob Dylan (1941) + Sara Dylan (1939)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q555426"
+  },
+  {
+   "name": "Adam Cohen",
+   "why": "Leonard Cohen (1934) + Suzanne Elrod (1959)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q2823929"
+  },
+  {
+   "name": "Rufus Wainwright",
+   "why": "Loudon Wainwright III (1946) + Kate McGarrigle (1946)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q192402"
+  },
+  {
+   "name": "Enrique Iglesias",
+   "why": "Julio Iglesias (1943) + Isabel Preysler (1951)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q47122"
+  },
+  {
+   "name": "Julio Iglesias Jr.",
+   "why": "Julio Iglesias (1943) + Isabel Preysler (1951)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q1832274"
+  },
+  {
+   "name": "Chaz Bono",
+   "why": "Sonny Bono (1935) + Cher (1946)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q979387"
+  },
+  {
+   "name": "Carnie Wilson",
+   "why": "Brian Wilson (1942) + Marilyn Wilson (1947)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q3700226"
+  },
+  {
+   "name": "Chynna Phillips",
+   "why": "John Phillips (1935) + Michelle Phillips (1944)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q3676126"
+  },
+  {
+   "name": "Zak Starkey",
+   "why": "Ringo Starr (1940) + Maureen Starkey Tigrett (1946)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q144589"
+  },
+  {
+   "name": "Julian Lennon",
+   "why": "John Lennon (1940) + Cynthia Lennon (1939)",
+   "batch": 7,
+   "country": "Music",
+   "qid": "Q357974"
+  },
+  {
+   "name": "Gwyneth Paltrow",
+   "why": "Bruce Paltrow (1943) + Blythe Danner (1943)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q34460"
+  },
+  {
+   "name": "Laura Dern",
+   "why": "Bruce Dern (1936) + Diane Ladd (1935)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q220901"
+  },
+  {
+   "name": "Kiefer Sutherland",
+   "why": "Donald Sutherland (1935) + Shirley Douglas (1934)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q103946"
+  },
+  {
+   "name": "Charlie Sheen",
+   "why": "Martin Sheen (1940) + Janet Sheen (1944)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q103939"
+  },
+  {
+   "name": "Emilio Estevez",
+   "why": "Martin Sheen (1940) + Janet Sheen (1944)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q220918"
+  },
+  {
+   "name": "Ben Stiller",
+   "why": "Jerry Stiller (1927) + Anne Meara (1929)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q47100"
+  },
+  {
+   "name": "Josh Brolin",
+   "why": "James Brolin (1940) + Jane Cameron Agee (1939)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q41396"
+  },
+  {
+   "name": "Carrie Fisher",
+   "why": "Eddie Fisher (1928) + Debbie Reynolds (1932)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q108941"
+  },
+  {
+   "name": "Sean Astin",
+   "why": "Patty Duke (1946)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q189351"
+  },
+  {
+   "name": "Joely Richardson",
+   "why": "Tony Richardson (1928) + Vanessa Redgrave (1937)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q234131"
+  },
+  {
+   "name": "Scott Caan",
+   "why": "James Caan (1940) + Sheila Ryan (1952)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q314673"
+  },
+  {
+   "name": "Jamie Lee Curtis",
+   "why": "Tony Curtis (1925) + Janet Leigh (1927)",
+   "batch": 7,
+   "country": "Film",
+   "qid": "Q106997"
   }
  ],
  "_note_batch2": "Batch 2 is picked parent-first: parents born ~1935-1963 (63-90 now), so their 40-50 window falls in ~1985-2013, with the child now 40-50.",
  "_note_batch5": "France/Belgium/Italy: dated press captions (Purepeople, Paris Match, Corriere) worked best for France in batch 4.",
- "_note_batch6": "India / Black (US, UK, Jamaica) / Chinese (HK, Taiwan): parents photographed at 40-50 in the 1980s-2000s."
+ "_note_batch6": "India / Black (US, UK, Jamaica) / Chinese (HK, Taiwan): parents photographed at 40-50 in the 1980s-2000s.",
+ "_note_batch7": "Subjects photographed at dated public events in their 20s (racing, football, politics, music, film) with parents famous in their 40s; 'country' holds the field here."
 }

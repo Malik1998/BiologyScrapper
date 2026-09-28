@@ -32,14 +32,14 @@ BLOCKED = ("gettyimages", "alamy", "shutterstock", "istockphoto", "dreamstime",
            "gethucinema", "wallpaper", "ganeshaspeaks",
            # batch 6: card and resale marketplaces date the card or the record
            "sportscardspro", "beckett.", "comc.", "tcdb.", "psacard", "aucfan",
-           "ricardo.ch", "picclick", "worthpoint", "mercari", "rakuten.")
+           "ricardo.ch", "picclick", "worthpoint", "poster", "mercari", "rakuten.")
 # Caption words that mean "the year is of a product or an article, not of the
 # photo": covers, cards, posters, reissues, look-ahead pieces.
 BAD_CAPTION = re.compile(
     r"\b(album|cd|lp|vinyl|reissue|cover|topps|card|autograph|signed|poster|"
-    r"souvenir|full movie|trailer|box office|net worth|forecast|upcoming|tickets|"
+    r"souvenir|\w*plakat|affiche|locandina|cartel|full movie|trailer|box office|net worth|forecast|upcoming|tickets|"
     r"birthday|collection|issue|wallpapers?|horoscope|birth chart|transformation|"
-    r"before and after|upper deck|bowman|fleer|donruss|rookie|prices|gebraucht|then and now|throwback|collage|vhs|dvd|coupure|clipping|lobby card)\b", re.I)
+    r"before and after|upper deck|bowman|fleer|donruss|futera|panini|memorabilia|psa \d+|graded|rookie|prices|gebraucht|then and now|throwback|collage|vhs|dvd|coupure|clipping|lobby card)\b", re.I)
 # "1998x3000" is a resolution, "2000 euros" a price: numbers that look like years
 NOT_A_YEAR = re.compile(r"\d{3,4}\s*[x×]\s*\d{3,4}|\b\d{4}\s*(euros?|dollars?|rs|rupees|crores?|lakhs?)\b|\b\d{4}\s*[€$£]"
                         r"|(\brs\.?|₹|\$|€|£)\s*\d{4}\b", re.I)
@@ -48,6 +48,8 @@ MONTHS = {m: i + 1 for i, m in enumerate(
 MONTHS.update({m: i + 1 for i, m in enumerate(
     "janvier février mars avril mai juin juillet août septembre octobre novembre décembre".split())})
 MONTHS.update({m[:3]: n for m, n in list(MONTHS.items()) if len(m) > 3})
+# "#DM11", "#302", "#126/295": a card or print-run number, the year is the set's
+CARD_NO = re.compile(r"#\s?[a-z]{0,3}\d+")
 SUFFIXES = {"jr", "sr", "ii", "iii", "junior", "senior"}
 WEB_ID_MIN = 0.40   # every wrong-person pick in review but two was below this
 YEAR = re.compile(r"(?<!\d)(19[5-9]\d|20[0-4]\d)(?!\d)")
@@ -123,7 +125,7 @@ def _harvest_one(name, birth, age_lo, age_hi, min_px=500):
             tn = _norm(title + " " + (r.get("url") or ""))
             if not all(t in tn.split() for t in (first[0], last)):
                 continue
-            if BAD_CAPTION.search(title) or NOT_A_YEAR.search(title):
+            if BAD_CAPTION.search(title) or NOT_A_YEAR.search(title) or CARD_NO.search(title):
                 continue
             # "Bobby Bonds Jr." is not Bobby Bonds, "Ken Griffey Sr." not Jr.
             if (SUFFIXES & set(_norm(title).split())) - own_suffix:
