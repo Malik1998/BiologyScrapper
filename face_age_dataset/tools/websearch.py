@@ -59,8 +59,21 @@ _lock = threading.Lock()
 GAP = 1.5
 PER_QUERY = 40
 
+# Results fetched elsewhere -- in a browser, see browser_bridge.py -- keyed by
+# query. When set, _search reads from here and never calls ddgs; queries not
+# answered yet are collected in RECORD for the browser to run.
+CACHE = None
+RECORD = None
+
 
 def _search(query):
+    if CACHE is not None:
+        if query in CACHE:
+            return CACHE[query]
+        if RECORD is not None:
+            with _lock:
+                RECORD.add(query)
+        return []
     from ddgs import DDGS
     for attempt in range(len(C.BACKOFF) + 1):
         C._wait_turn(_last, _lock, GAP)
@@ -119,6 +132,13 @@ def _harvest_one(name, birth, age_lo, age_hi, min_px=500):
             if any(b in host for b in BLOCKED):
                 continue
             title = r.get("title") or ""
+            if r.get("manual_date"):
+                # dated by hand from the event it shows (browser_manual.json);
+                # the caption and URL filters are for machine-dated hits only
+                row = _manual_row(r, img, (by, bm, bd), age_lo, age_hi, min_px)
+                if row:
+                    rows.append(row)
+                continue
             # The caption has to name this person, first name included: with
             # the surname alone, "James McCartney" matched photos of Paul and
             # "Ben Quayle" photos of Dan.
@@ -171,6 +191,27 @@ def _harvest_one(name, birth, age_lo, age_hi, min_px=500):
                 "search_title": (r.get("title") or "")[:200],
             })
     return rows
+
+
+def _manual_row(r, img, born, age_lo, age_hi, min_px):
+    w, h = int(r.get("width") or 0), int(r.get("height") or 0)
+    if w and h and min(w, h) < min_px:
+        return None
+    parts = [int(x) for x in r["manual_date"].split("-")]
+    taken = (parts + [None, None])[:3] + [("year", "month", "day")[len(parts) - 1]]
+    age, lo_age, unc = C.age_on(born, tuple(taken))
+    if not (age_lo <= lo_age and lo_age + unc <= age_hi):
+        return None
+    return {
+        "title": "File:web_" + hashlib.sha1(img.encode()).hexdigest()[:16] + ".jpg",
+        "source": "web", "dl_url": img, "big_url": img, "file_url": img,
+        "page": r.get("url"), "w": w, "h": h,
+        "date": r["manual_date"], "date_precision": taken[3],
+        "date_source": "manual: " + r.get("date_evidence", ""),
+        "date_conflict": False, "age": age, "age_uncertainty": unc,
+        "license": None, "author": urlparse(r.get("url") or img).netloc,
+        "search_title": (r.get("title") or "")[:200],
+    }
 
 
 def _caption_date(title, year):

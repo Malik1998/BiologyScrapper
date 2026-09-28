@@ -120,6 +120,10 @@ def main():
                     help="with --candidates: skip the seed list")
     ap.add_argument("--max-new", type=int, default=0,
                     help="with --candidates: take at most this many new people")
+    ap.add_argument("--web-cache", metavar="JSON",
+                    help="answer web searches from this file (filled in a browser by "
+                         "browser_bridge.py) instead of ddgs; unanswered queries go "
+                         "to work/browser_queries.json")
     args = ap.parse_args()
 
     seed = json.load(open(os.path.join(os.path.dirname(__file__), "seed_people.json")))
@@ -145,6 +149,8 @@ def main():
                          "mother_qid": (m.get("mother") or {}).get("qid"),
                          "web_slots": web}
             names.append(nm)
+        if args.names:
+            names = [n for n in names if n in args.names]
         print(f"{len(names)} people one photo short of a minimum set", flush=True)
     if args.candidates and args.only_new:
         names = list(args.names)
@@ -172,6 +178,10 @@ def main():
     C.MIN_GAP = args.gap if args.gap else 1.0
     import build
     build.USE_WEB = not args.no_web
+    if args.web_cache:
+        import websearch
+        websearch.CACHE = json.load(open(args.web_cache)) if os.path.exists(args.web_cache) else {}
+        websearch.RECORD = set()
 
     state = {} if args.redo else sync_state_from_dataset(load_state(),
                                                          overwrite=args.retry_missing)
@@ -220,6 +230,11 @@ def main():
     mins = sum(1 for r in uniq.values() if r.get("has_minimum_set"))
     print(f"\ndone: {ok} built, {full} with all 4 slots, {mins} with the minimum set")
     print(f"dataset -> {os.path.abspath(DATA)}")
+    if args.web_cache:
+        import websearch
+        qp = os.path.join(os.path.dirname(__file__), "..", "work", "browser_queries.json")
+        json.dump(sorted(websearch.RECORD), open(qp, "w"), ensure_ascii=False, indent=0)
+        print(f"{len(websearch.RECORD)} web queries still to run in the browser -> {qp}")
 
 
 if __name__ == "__main__":
