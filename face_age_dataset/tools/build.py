@@ -156,6 +156,11 @@ def _embed_main_face(path):
         x, y, fw, fh = f[:4]
         centre = (((x + fw / 2) - cx) ** 2 + ((y + fh / 2) - cy) ** 2) ** 0.5
         return fw - 0.35 * centre
+    # a big, central false detection must not beat a sure face: Ingrid
+    # Klimke's portrait is her on horseback, and the horse's head (0.62)
+    # outranked her face (0.94) on size, making a horse the reference
+    top = max(float(f[-1]) for f in faces)
+    faces = [f for f in faces if float(f[-1]) >= top - 0.15]
     best = max(faces, key=rank)
     embs = embed_faces(img, [best])
     return (embs[0] if embs else None), len(faces)
@@ -199,6 +204,42 @@ def _web_ok(s):
     return (s["face"].get("identity") or 0) >= websearch.WEB_ID_MIN
 
 
+def _deliver(best, cache, slot, ref):
+    """(image path, face box) for the delivered crop.
+
+    Re-fetch large so the crop is not limited by the 1400px working copy --
+    but keep the face that was scored there. Re-choosing by identity in the
+    big image let a stray detection win (a horse's head for Ingrid Klimke).
+    """
+    box, src = best["face"]["box"], best["local"]
+    hi_res = os.path.join(cache, slot, "hires_" + os.path.basename(best["local"]))
+    if not F.fetch(F.url_for(best, 3840), hi_res):
+        return src, box
+    im0, im1 = cv2.imread(src), cv2.imread(hi_res)
+    if im0 is None or im1 is None:
+        return src, box
+    k = im1.shape[1] / im0.shape[1]
+    want = [v * k for v in box]
+    wx, wy = want[0] + want[2] / 2, want[1] + want[3] / 2
+    a2 = F.analyse(hi_res, ref_emb=ref, identity_min=THRESH.get(slot, 0.30))
+    if a2 and a2.get("score", 0) > 0 and a2.get("box"):
+        b = a2["box"]
+        bx, by = b[0] + b[2] / 2, b[1] + b[3] / 2
+        if ((bx - wx) ** 2 + (by - wy) ** 2) ** 0.5 < 0.5 * max(want[2], want[3]):
+            return hi_res, b
+    return hi_res, [int(round(v)) for v in want]
+
+
+def _crop_ok(face_path, ref, min_id=0.18):
+    emb, n = _embed_main_face(face_path)
+    if emb is None:
+        return False
+    if ref is None:
+        return True
+    from identity import cosine
+    return cosine(emb, ref) >= min_id
+
+
 def _strictly_in(birth, date, lo, hi):
     from check_ages import age_bounds
     if not date:
@@ -227,7 +268,7 @@ def crop_face(src, box, dest, pad=0.55):
 # Aguirre), a portrait painting (Guillaume), a tin with a printed portrait
 # (Beatrix on Oranje Hagel), a green-card scan (Eduardo Bolsonaro).
 NOT_A_PHOTO = re.compile(
-    r"banknote|bank ?note|\bstamps?\b|postage|\bcoins?\b(?! toss)|"
+    r"banknote|bank ?note|baht|\bstamps?\b|postage|\bcoins?\b(?! toss)|"
     r"poster\b|affiche|mural|graffiti|painting|oil on canvas|portrait by|schilderij|gem[aä]lde|"
     r"\bdrawing|sketch|caricature|cartoon|illustration|statue|sculpture|\bbust\b|wax ?(figure|museum|work)|"
     r"oranje hagel|\bblik\b|souvenir|"
@@ -407,22 +448,29 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
 
         # a licensed, curator-dated file beats a search hit of similar quality
         usable.sort(key=lambda s: (s.get("source") == "web", -s["face"]["score"]))
-        best = usable[0]
         os.makedirs(outdir, exist_ok=True)
         ext = ".jpg"
-        full = os.path.join(outdir, f"{slot}_age{best['age']}{ext}")
-
-        # re-fetch large so the delivered crop is not limited by the 1400px
-        # working copy we used for scoring
-        hi_res = os.path.join(cache, slot, "hires_" + os.path.basename(best["local"]))
-        box, src = best["face"]["box"], best["local"]
-        if F.fetch(F.url_for(best, 3840), hi_res):
-            a2 = F.analyse(hi_res, ref_emb=ref, identity_min=THRESH.get(slot, 0.30))
-            if a2 and a2.get("score", 0) > 0 and a2.get("box"):
-                box, src = a2["box"], hi_res
-        shutil.copyfile(src, full)
-        face_p = os.path.join(outdir, f"{slot}_age{best['age']}_face{ext}")
-        crop_face(src, box, face_p)
+        best = None
+        for cand in usable[:5]:
+            full = os.path.join(outdir, f"{slot}_age{cand['age']}{ext}")
+            face_p = os.path.join(outdir, f"{slot}_age{cand['age']}_face{ext}")
+            src, box = _deliver(cand, cache, slot, ref)
+            shutil.copyfile(src, full)
+            crop_face(src, box, face_p)
+            # The crop must still show this person. It once showed a horse's
+            # head, an ear, a hand, a guitar: the hi-res pass picked another
+            # detection than the one scored on the working copy.
+            if _crop_ok(face_p, ref):
+                best = cand
+                break
+            for q in (full, face_p):
+                if os.path.exists(q):
+                    os.remove(q)
+            print(f"       crop check failed for {cand['title'][5:60]}, trying next")
+        if best is None:
+            entry["reason"] = "no candidate survived the crop check"
+            meta["slots"][slot] = entry
+            continue
 
         f = best["face"]
         entry.update({
