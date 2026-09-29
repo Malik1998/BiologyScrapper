@@ -7,6 +7,7 @@ photo is of the wrong person entirely.
 """
 
 import json
+import threading
 import os
 import urllib.parse
 import urllib.request
@@ -19,17 +20,21 @@ SFACE = os.path.join(os.path.dirname(__file__), "..", "models", "sface.onnx")
 # OpenCV's documented same-identity cosine threshold for SFace
 SAME_ID = 0.363
 
-_rec = None
+_tls = threading.local()
 
 
 def recognizer():
-    global _rec
-    if _rec is None:
-        _rec = cv2.FaceRecognizerSF.create(SFACE, "")
-    return _rec
+    """One recognizer per thread. A single shared SFace net is not thread-safe:
+    under harvest_all -j 6 concurrent feature() calls handed one thread
+    another's embedding, so identity scores belonged to the wrong face
+    (Freddie Prinze Jr.'s slot scored 0.82 and cropped Sarah Michelle Gellar)."""
+    r = getattr(_tls, "rec", None)
+    if r is None:
+        r = cv2.FaceRecognizerSF.create(SFACE, "")
+        _tls.rec = r
+    return r
 
 
-import threading
 import time
 
 _wd_lock = threading.Lock()
