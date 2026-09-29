@@ -31,22 +31,32 @@ LABEL = {"subject_young": "subject, 20-30", "subject_now": "subject, 40-50",
 PREC = {"day": 1.0, "month": 0.9, "year": 0.75}
 
 
-def complete_sets(rating=False, slack=False):
+def complete_sets(rating=False, slack=False, min_set=False, colour=False):
     win = "in_slack_window" if slack else "in_window"
+
+    def good(e):
+        q = e.get("qc") or {}
+        return (e.get("status") == "ok" and e.get("publishable")
+                and e.get(win)                               # run check_ages.py first
+                and (not rating or q.get("ok_for_rating"))
+                and (not colour or q.get("colour")))
     for mp in sorted(glob.glob(os.path.join(DATA, "*", "meta.json"))):
         m = json.load(open(mp))
         s = m["slots"]
-        if all(s.get(k, {}).get("status") == "ok" and s[k].get("publishable")
-               and s[k].get(win)                             # run check_ages.py first
-               and (not rating or (s[k].get("qc") or {}).get("ok_for_rating"))
-               for k in SLOTS):
+        ok = {k for k in SLOTS if good(s.get(k, {}))}
+        if min_set:
+            if {"subject_now", "subject_young"} <= ok and ok & {"father_40s", "mother_40s"}:
+                # an unusable parent photo is left out, not shown
+                m["slots"] = {k: s[k] for k in ok}
+                yield m
+        elif ok == set(SLOTS):
             yield m
 
 
 def score(m):
     # the weakest photo decides how convincing the set is
     return min((e.get("quality_score") or 0) * PREC.get(e.get("date_precision"), 0.5)
-               for e in (m["slots"][k] for k in SLOTS))
+               for e in m["slots"].values())
 
 
 def pick(sets, n, drop):
@@ -100,9 +110,16 @@ def main():
                     help="only faces that pass quality_tags (frontal, level, neutral, sharp)")
     ap.add_argument("--slack", action="store_true",
                     help="ages may sit up to 2 years outside the window")
+    ap.add_argument("--only", default="", help="comma-separated slugs, hand-picked")
+    ap.add_argument("--min-set", action="store_true",
+                    help="now + young + at least one parent, not all four")
+    ap.add_argument("--colour", action="store_true", help="colour photos only")
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "biologists_subset"))
     a = ap.parse_args()
-    people = pick(list(complete_sets(a.rating, a.slack)), a.n, set(filter(None, a.drop.split(","))))
+    only = set(filter(None, a.only.split(",")))
+    sets = [m for m in complete_sets(a.rating, a.slack, a.min_set, a.colour)
+            if not only or m["slug"] in only]
+    people = pick(sets, a.n, set(filter(None, a.drop.split(","))))
     os.makedirs(a.out, exist_ok=True)
 
     rows, cards = [], []
@@ -111,7 +128,11 @@ def main():
         os.makedirs(os.path.join(a.out, slug), exist_ok=True)
         cells = []
         for k in SLOTS:
-            e = m["slots"][k]
+            e = m["slots"].get(k)
+            if e is None:
+                cells.append(f'<figure class="none"><div class="empty">no photo that passes</div>'
+                             f'<figcaption><span class="role">{html.escape(LABEL[k])}</span></figcaption></figure>')
+                continue
             face, full = f"{slug}/{k}.jpg", f"{slug}/{k}_full.jpg"
             save(os.path.join(DATA, e["face_crop"]), os.path.join(a.out, face), 400)
             save(os.path.join(DATA, e["file"]), os.path.join(a.out, full), 1200)
@@ -141,7 +162,8 @@ def main():
         f.write(PAGE.replace("{N}", str(len(people))).replace("{P}", str(len(rows)))
                 .replace("{WIN}", "every age within 2 years of its window" if a.slack
                          else "every age strictly inside its window")
-                .replace("{QC}", "<li>frontal, level, neutral, sharp faces</li>" if a.rating else "")
+                .replace("{QC}", ("<li>frontal, level, neutral, sharp faces</li>" if a.rating else "")
+                         + ("<li>colour photos only</li>" if a.colour else ""))
                 .replace("{CARDS}", "\n".join(cards)))
     print(f"{len(people)} people, {len(rows)} photos -> {a.out}")
     for m in people:
@@ -174,6 +196,7 @@ figure{margin:0;display:grid;gap:8px;align-content:start}
 figure>a{display:block;border-radius:4px;outline-offset:3px}
 figure>a:focus-visible{outline:2px solid var(--accent)}
 img{width:100%;max-width:100%;aspect-ratio:1;object-fit:cover;display:block;border-radius:4px;background:var(--line)}
+.empty{aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;display:grid;place-items:center;color:var(--mut);font-size:12px;text-align:center;padding:8px}
 figcaption{display:grid;gap:2px;font-size:13px;line-height:1.35}
 .role{font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .who{font-weight:500}
