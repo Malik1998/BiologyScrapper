@@ -76,7 +76,7 @@ def already_done(slug_guess, name, state):
 def one(name, state, top, spec=None):
     spec = spec or {}
     try:
-        meta = build_person(name, top=top, qid=spec.get("qid"),
+        meta = build_person(name, slug=spec.get("slug"), top=top, qid=spec.get("qid"),
                             father_qid=spec.get("father_qid"),
                             mother_qid=spec.get("mother_qid"),
                             web_slots=spec.get("web_slots"))
@@ -124,6 +124,9 @@ def main():
                     help="answer web searches from this file (filled in a browser by "
                          "browser_bridge.py) instead of ddgs; unanswered queries go "
                          "to work/browser_queries.json")
+    ap.add_argument("--all-missing", action="store_true",
+                    help="everyone in dataset/ with an empty slot, pinned to the "
+                         "Wikidata ids recorded in their meta.json")
     ap.add_argument("--strict-ages", action="store_true",
                     help="admit a photo only if both ends of its age range are in the window")
     ap.add_argument("--web-gap", type=float, default=0,
@@ -156,6 +159,20 @@ def main():
         if args.names:
             names = [n for n in names if n in args.names]
         print(f"{len(names)} people one photo short of a minimum set", flush=True)
+    if args.all_missing:
+        names = []
+        for mp in sorted(glob.glob(os.path.join(DATA, "*", "meta.json"))):
+            m = json.load(open(mp))
+            if all(e.get("status") == "ok" for e in m["slots"].values()):
+                continue
+            nm = m.get("query_name") or m["subject"]["name"]
+            specs[nm] = {"name": nm, "qid": m["subject"]["qid"], "slug": m["slug"],
+                         "father_qid": (m.get("father") or {}).get("qid"),
+                         "mother_qid": (m.get("mother") or {}).get("qid")}
+            names.append(nm)
+        if args.names:
+            names = [n for n in names if n in args.names]
+        print(f"{len(names)} people with an empty slot", flush=True)
     if args.candidates and args.only_new:
         names = list(args.names)
     if args.candidates:
@@ -195,7 +212,7 @@ def main():
                                                          overwrite=args.retry_missing)
     if not args.redo:
         save_state(state)
-    if args.fill_one_short:
+    if args.fill_one_short or args.all_missing:
         todo = list(names)
     elif args.retry_missing:
         todo = [n for n in names

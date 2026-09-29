@@ -237,6 +237,11 @@ NOT_A_PHOTO = re.compile(
 # outside). Off by default until the policy is decided; harvest_all
 # --strict-ages turns it on.
 STRICT_AGES = False
+# Nominal windows are 40-50 and 20-30, but a photo two years outside is as
+# good for the analysis (agreed 2026-09-29: "2-3 years off does not matter").
+# Harvest with this much slack either side; the nominal window stays in the
+# meta so analysis can still filter to it (see check_ages.py).
+AGE_SLACK = 2
 
 
 def build_person(name, slug=None, top=60, qid=None, father_qid=None,
@@ -313,7 +318,9 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         if slot in prev:
             meta["slots"][slot] = prev[slot]
             continue
-        entry = {"status": "missing", "candidates_found": 0}
+        entry = {"status": "missing", "candidates_found": 0,
+                 "window": [lo, hi], "age_slack": AGE_SLACK}
+        lo, hi = lo - AGE_SLACK, hi + AGE_SLACK
         if not p:
             entry["reason"] = "parent unknown in Wikidata"
             meta["slots"][slot] = entry

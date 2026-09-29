@@ -6,7 +6,9 @@ or 50 -- fine) passes, but so does one of someone born in 1912 (50 or 51).
 This writes, for every filled slot:
 
     age_min, age_max   youngest and oldest the person can have been
-    in_window          both bounds inside the slot's window
+    in_window          both bounds inside the slot's nominal window
+    in_slack_window    both bounds inside it widened by SLACK years (what the
+                       harvest admits since 2026-09-29)
 
 and per person `strict_minimum_set`: the minimum set counting only such
 photos. Nothing is removed; filter on these fields.
@@ -22,6 +24,7 @@ import sys
 DATA = os.path.join(os.path.dirname(__file__), "..", "dataset")
 WINDOW = {"subject_now": (40, 50), "subject_young": (20, 30),
           "father_40s": (40, 50), "mother_40s": (40, 50)}
+SLACK = 2
 
 
 def age_bounds(birth, date):
@@ -48,7 +51,8 @@ def main():
                 continue
             lo, hi = age_bounds(e["person_birth"], e["date_taken"])
             a, b = WINDOW[k]
-            e.update(age_min=lo, age_max=hi, in_window=a <= lo and hi <= b)
+            e.update(age_min=lo, age_max=hi, in_window=a <= lo and hi <= b,
+                     in_slack_window=a - SLACK <= lo and hi <= b + SLACK)
             total += 1
             outside += not e["in_window"]
         good = {k for k, e in s.items() if e.get("status") == "ok" and e.get("in_window")}
