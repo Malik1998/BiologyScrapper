@@ -127,6 +127,9 @@ def main():
     ap.add_argument("--all-missing", action="store_true",
                     help="everyone in dataset/ with an empty slot, pinned to the "
                          "Wikidata ids recorded in their meta.json")
+    ap.add_argument("--requalify", action="store_true",
+                    help="with --all-missing: also redo filled slots whose photo fails "
+                         "the rating checks, keeping the old photo unless a better one passes")
     ap.add_argument("--strict-ages", action="store_true",
                     help="admit a photo only if both ends of its age range are in the window")
     ap.add_argument("--web-gap", type=float, default=0,
@@ -163,7 +166,9 @@ def main():
         names = []
         for mp in sorted(glob.glob(os.path.join(DATA, "*", "meta.json"))):
             m = json.load(open(mp))
-            if all(e.get("status") == "ok" for e in m["slots"].values()):
+            if all(e.get("status") == "ok" and (not args.requalify
+                   or (e.get("qc") or {}).get("ok_for_rating", True) or e.get("source") == "web")
+                   for e in m["slots"].values()):
                 continue
             nm = m.get("query_name") or m["subject"]["name"]
             specs[nm] = {"name": nm, "qid": m["subject"]["qid"], "slug": m["slug"],
@@ -200,6 +205,7 @@ def main():
     import build
     build.USE_WEB = not args.no_web
     build.STRICT_AGES = args.strict_ages
+    build.REQUALIFY = args.requalify
     if args.web_gap:
         import websearch
         websearch.GAP = args.web_gap

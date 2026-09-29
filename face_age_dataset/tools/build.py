@@ -283,6 +283,10 @@ STRICT_AGES = False
 # Harvest with this much slack either side; the nominal window stays in the
 # meta so analysis can still filter to it (see check_ages.py).
 AGE_SLACK = 2
+# --requalify: redo filled slots whose photo fails the rating checks
+# (quality_tags.py), keeping the old photo unless a candidate passes them
+REQUALIFY = False
+PITCH_FRONTAL = 0.575     # median nose-height ratio measured on the dataset
 
 
 def build_person(name, slug=None, top=60, qid=None, father_qid=None,
@@ -361,9 +365,14 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         return rel_refs[role]
 
     for slot, (p, lo, hi) in people.items():
+        old = None
         if slot in prev:
-            meta["slots"][slot] = prev[slot]
-            continue
+            e0 = prev[slot]
+            if not (REQUALIFY and e0.get("status") == "ok" and e0.get("source") != "web"
+                    and not (e0.get("qc") or {}).get("ok_for_rating", True)):
+                meta["slots"][slot] = e0
+                continue
+            old = e0
         entry = {"status": "missing", "candidates_found": 0,
                  "window": [lo, hi], "age_slack": AGE_SLACK}
         lo, hi = lo - AGE_SLACK, hi + AGE_SLACK
@@ -455,27 +464,61 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         usable.sort(key=lambda s: (s.get("source") == "web", -s["face"]["score"]))
         os.makedirs(outdir, exist_ok=True)
         ext = ".jpg"
-        best = None
-        for cand in usable[:5]:
-            full = os.path.join(outdir, f"{slot}_age{cand['age']}{ext}")
-            face_p = os.path.join(outdir, f"{slot}_age{cand['age']}_face{ext}")
+        from quality_tags import measure, judge
+        best = fallback = None
+        tried = []
+        for cand in usable[:12]:
+            full = os.path.join(outdir, f"{slot}_try{len(tried)}{ext}")
+            face_p = os.path.join(outdir, f"{slot}_try{len(tried)}_face{ext}")
             src, box = _deliver(cand, cache, slot, ref)
             shutil.copyfile(src, full)
             crop_face(src, box, face_p)
+            tried.append((full, face_p))
             # The crop must still show this person. It once showed a horse's
             # head, an ear, a hand, a guitar: the hi-res pass picked another
             # detection than the one scored on the working copy.
-            if _crop_ok(face_p, ref):
+            if not _crop_ok(face_p, ref):
+                print(f"       crop check failed for {cand['title'][5:60]}, trying next")
+                continue
+            q = measure(face_p) or {}
+            ok, issues = judge(q, PITCH_FRONTAL)
+            q.update(ok_for_rating=ok, issues=issues)
+            cand["_qc"], cand["_files"] = q, (full, face_p)
+            # raters need frontal, level, neutral, sharp faces: take the best
+            # candidate that is, not just the best-scored one
+            if ok:
                 best = cand
                 break
-            for q in (full, face_p):
-                if os.path.exists(q):
+            if fallback is None and old is None:
+                fallback = cand
+            if old is None and len(tried) >= 5 and fallback is not None:
+                break
+        best = best or fallback
+        keep = {best["_files"][0], best["_files"][1]} if best else set()
+        for pair in tried:
+            for q in pair:
+                if q not in keep and os.path.exists(q):
                     os.remove(q)
-            print(f"       crop check failed for {cand['title'][5:60]}, trying next")
         if best is None:
+            if old is not None:
+                meta["slots"][slot] = old          # nothing better: keep the old photo
+                print("       no candidate passes the rating checks; kept the old photo")
+                continue
             entry["reason"] = "no candidate survived the crop check"
             meta["slots"][slot] = entry
             continue
+        if old is not None:
+            for q in (old.get("file"), old.get("face_crop")):
+                if q and os.path.exists(os.path.join(DATA, q)):
+                    os.remove(os.path.join(DATA, q))
+            entry["replaced"] = {"page": old.get("source_page"),
+                                 "issues": (old.get("qc") or {}).get("issues")}
+            print(f"       replaced (was: {', '.join((old.get('qc') or {}).get('issues') or [])})")
+        full = os.path.join(outdir, f"{slot}_age{best['age']}{ext}")
+        face_p = os.path.join(outdir, f"{slot}_age{best['age']}_face{ext}")
+        os.replace(best["_files"][0], full)
+        os.replace(best["_files"][1], face_p)
+        entry["qc"] = best["_qc"]
 
         f = best["face"]
         entry.update({
