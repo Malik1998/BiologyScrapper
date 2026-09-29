@@ -31,12 +31,12 @@ LABEL = {"subject_young": "subject, 20-30", "subject_now": "subject, 40-50",
 PREC = {"day": 1.0, "month": 0.9, "year": 0.75}
 
 
-def complete_sets(rating=False, slack=False, min_set=False, colour=False):
+def complete_sets(rating=False, slack=False, min_set=False, colour=False, internal=False):
     win = "in_slack_window" if slack else "in_window"
 
     def good(e):
         q = e.get("qc") or {}
-        return (e.get("status") == "ok" and e.get("publishable")
+        return (e.get("status") == "ok" and (internal or e.get("publishable"))
                 and e.get(win)                               # run check_ages.py first
                 and (not rating or q.get("ok_for_rating"))
                 and (not colour or q.get("colour")))
@@ -99,6 +99,8 @@ def age_range(e):
 
 
 def credit(e):
+    if not e.get("publishable"):
+        return "no free licence: internal review only"
     return f"{e.get('author') or 'unknown author'}, {e.get('license')}"
 
 
@@ -114,10 +116,12 @@ def main():
     ap.add_argument("--min-set", action="store_true",
                     help="now + young + at least one parent, not all four")
     ap.add_argument("--colour", action="store_true", help="colour photos only")
+    ap.add_argument("--internal", action="store_true",
+                    help="also photos without a free licence (for internal review only)")
     ap.add_argument("--out", default=os.path.join(ROOT, "work", "biologists_subset"))
     a = ap.parse_args()
     only = set(filter(None, a.only.split(",")))
-    sets = [m for m in complete_sets(a.rating, a.slack, a.min_set, a.colour)
+    sets = [m for m in complete_sets(a.rating, a.slack, a.min_set, a.colour, a.internal)
             if not only or m["slug"] in only]
     people = pick(sets, a.n, set(filter(None, a.drop.split(","))))
     os.makedirs(a.out, exist_ok=True)
@@ -162,6 +166,8 @@ def main():
         f.write(PAGE.replace("{N}", str(len(people))).replace("{P}", str(len(rows)))
                 .replace("{WIN}", "every age within 2 years of its window" if a.slack
                          else "every age strictly inside its window")
+                .replace("{LIC}", "Photos without a free licence (found by hand: film stills, press photos with a known date) are marked for internal review only; the rest are from Wikimedia Commons under a free licence, credited under each photo." if a.internal
+                         else "Every photo is from Wikimedia Commons under a free licence; the line under each photo credits the author and links to the source page.")
                 .replace("{QC}", ("<li>frontal, level, neutral, sharp faces</li>" if a.rating else "")
                          + ("<li>colour photos only</li>" if a.colour else ""))
                 .replace("{CARDS}", "\n".join(cards)))
@@ -209,7 +215,7 @@ figcaption{display:grid;gap:2px;font-size:13px;line-height:1.35}
 <header>
 <span class="eyebrow">Sample for review &middot; {N} families</span>
 <h1>Each person at 20&ndash;30 and at 40&ndash;50, next to their parents at 40&ndash;50</h1>
-<p class="lead">Ages come from the birth date on Wikidata and the date the photo was taken. When only the year is known, the age is shown as a two-year range. Every photo is from Wikimedia Commons under a free licence; the line under each photo credits the author and links to the source page. Select a face to open the full photo.</p>
+<p class="lead">Ages come from the birth date on Wikidata and the date the photo was taken. When only the year is known, the age is shown as a two-year range. {LIC} Select a face to open the full photo.</p>
 <ul class="key"><li><b>{N}</b> people</li><li><b>{P}</b> photos</li><li>one child per couple</li><li>{WIN}</li>{QC}<li>faces checked by eye</li></ul>
 </header>
 <div class="people">

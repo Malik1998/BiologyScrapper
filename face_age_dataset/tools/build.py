@@ -326,7 +326,10 @@ NOT_A_PHOTO = re.compile(
     r"poster\b|affiche|mural|graffiti|painting|oil on canvas|portrait by|schilderij|gem[aä]lde|"
     r"\bdrawing|sketch|caricature|cartoon|illustration|statue|sculpture|\bbust\b|wax ?(figure|museum|work)|"
     r"oranje hagel|\bblik\b|souvenir|"
-    r"green card|permanent resident|passport|\bid card|identity card", re.I)
+    r"green card|permanent resident|passport|\bid card|identity card|"
+    # review rq3: an "Australianstamp_1507", a 50 Dirham note, a Tussauds figure,
+    # a trailer title card, a cosplayer, a bus advert
+    r"stamp_|dirham|tussauds|trailer|cosplay|bluestar", re.I)
 # Only admit a photo when both ends of its possible age range are in the
 # window, not just the middle (185 photos dated to a bare year sat one year
 # outside). Off by default until the policy is decided; harvest_all
