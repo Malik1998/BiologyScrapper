@@ -364,6 +364,7 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
             rel_refs[role] = reference_embedding(q, cache) if q else None
         return rel_refs[role]
 
+    olds = {}
     for slot, (p, lo, hi) in people.items():
         old = None
         if slot in prev:
@@ -372,7 +373,7 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
                     and not (e0.get("qc") or {}).get("ok_for_rating", True)):
                 meta["slots"][slot] = e0
                 continue
-            old = e0
+            old = olds[slot] = e0
         entry = {"status": "missing", "candidates_found": 0,
                  "window": [lo, hi], "age_slack": AGE_SLACK}
         lo, hi = lo - AGE_SLACK, hi + AGE_SLACK
@@ -408,7 +409,10 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
                             use_web=web_slots is None or slot in web_slots)
         rejected = rejected_urls()
         # a file already used in another slot of this person is not a second photo
-        used = {e.get("source_file_url") for e in list(prev.values()) + list(meta["slots"].values())
+        # (not this slot's own old file: excluding it left requalified slots
+        # with no rows at all, and the early exit below then dropped the photo)
+        used = {e.get("source_file_url")
+                for e in [v for k, v in prev.items() if k != slot] + list(meta["slots"].values())
                 if e.get("status") == "ok"}
         rows = [r for r in rows
                 if r.get("page") not in rejected and r.get("file_url") not in rejected
@@ -556,6 +560,12 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         })
         meta["slots"][slot] = entry
         print(f"       -> age {best['age']} id={f.get('identity')} score={f['score']}")
+
+    # a requalified slot never ends up worse than it was: every early exit
+    # above ("no rows", "nothing passed identity") would otherwise lose it
+    for slot, o in olds.items():
+        if meta["slots"].get(slot, {}).get("status") != "ok":
+            meta["slots"][slot] = o
 
     ok = sum(1 for s in meta["slots"].values() if s.get("status") == "ok")
     meta["complete_slots"] = ok
