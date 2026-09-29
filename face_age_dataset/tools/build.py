@@ -21,7 +21,7 @@ from review_web import rejected_urls
 from licensing import tag as tag_licence
 import face as F
 from identity import (wikidata_person, wikidata_by_qid, commons_download,
-                      embed_faces)
+                      embed_faces, cosine)
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 DATA = os.path.join(ROOT, "dataset")
@@ -124,7 +124,7 @@ def harvest_slot(cat, birth, lo, hi, name=None, native_names=(), qid=None, use_w
     return rows
 
 
-def _embed_main_face(path):
+def _embed_main_face(path, all_faces=False):
     """Embed the dominant face of a reference image.
 
     Taking faces[:1] (detection order) is wrong: Ravi Shankar's P18 portrait
@@ -159,6 +159,11 @@ def _embed_main_face(path):
     # a big, central false detection must not beat a sure face: Ingrid
     # Klimke's portrait is her on horseback, and the horse's head (0.62)
     # outranked her face (0.94) on size, making a horse the reference
+    if all_faces:
+        # every detection: the one the confidence filter drops can be the
+        # subject (Ravi Shankar, face half behind his sitar)
+        faces = sorted(faces, key=rank, reverse=True)
+        return embed_faces(img, faces), len(faces)
     top = max(float(f[-1]) for f in faces)
     faces = [f for f in faces if float(f[-1]) >= top - 0.15]
     best = max(faces, key=rank)
@@ -178,6 +183,9 @@ def reference_embedding(person, cache, fallback_rows=None):
         if p:
             tried.append(p)
             emb, _ = _embed_main_face(p)
+            _, nf = _embed_main_face(p, all_faces=True)
+            if emb is not None and nf and nf > 1:
+                emb = _consensus_face(p, emb, person, cache, fallback_rows)
             if emb is not None:
                 return emb
 
@@ -194,6 +202,44 @@ def reference_embedding(person, cache, fallback_rows=None):
             print(f"       reference fell back to {r['title'][5:60]}")
             return emb
     return None
+
+
+def _single_face_embs(person, cache, rows, n=8):
+    out = []
+    for r in (rows or [])[:n * 2]:
+        q = os.path.join(cache, f"reffb_{person['qid']}_"
+                         + "".join(c if c.isalnum() else "_" for c in r["title"][5:])[:60] + ".jpg")
+        if not os.path.exists(q) and not F.fetch(F.url_for(r, 1280), q):
+            continue
+        emb, nf = _embed_main_face(q)
+        if emb is not None and nf == 1:
+            out.append(emb)
+        if len(out) >= n:
+            break
+    return out
+
+
+def _consensus_face(p18, emb, person, cache, rows):
+    """Pick the P18 face that the person's own single-face photos agree with.
+
+    Biggest-and-central is wrong for a group portrait: Ravi Shankar's P18 has
+    a sitar player in front of him, Billy Graham's shows Franklin beside him,
+    and the reference then matched that other face at cosine 1.0 in every
+    photo of the pair -- three review rounds rejected the same wrong crop.
+    """
+    embs, _ = _embed_main_face(p18, all_faces=True)
+    embs = [e for e in (embs or []) if e is not None]
+    votes = _single_face_embs(person, cache, rows)
+    if len(embs) < 2 or len(votes) < 2:
+        return emb
+    mean = [sum(cosine(e, v) for v in votes) / len(votes) for e in embs]
+    i = max(range(len(embs)), key=mean.__getitem__)
+    if mean[i] < 0.30:
+        return emb
+    if cosine(embs[i], emb) < 0.9:
+        print(f"       reference: face #{i} of the P18 portrait agrees with "
+              f"{len(votes)} single-face photos ({mean[i]:.2f}), not the biggest one")
+    return embs[i]
 
 
 def _web_ok(s):
@@ -230,7 +276,15 @@ def _deliver(best, cache, slot, ref):
     return hi_res, [int(round(v)) for v in want]
 
 
-def _crop_ok(face_path, ref, min_id=0.18):
+def _crop_ok(face_path, ref, min_id=0.18, scored_id=None):
+    """The delivered crop's main face must still be the scored face.
+
+    An absolute 0.18 let a neighbour through: Ravi Shankar's face scored 1.0
+    against the reference (it *is* the P18 file), the crop centred on the
+    sitar player beside him at ~0.2 and passed. So the crop must also stay
+    near the score it was chosen with."""
+    if scored_id is not None:
+        min_id = max(min_id, scored_id - 0.30)
     emb, n = _embed_main_face(face_path)
     if emb is None:
         return False
@@ -481,7 +535,7 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
             # The crop must still show this person. It once showed a horse's
             # head, an ear, a hand, a guitar: the hi-res pass picked another
             # detection than the one scored on the working copy.
-            if not _crop_ok(face_p, ref):
+            if not _crop_ok(face_p, ref, scored_id=cand["face"].get("identity")):
                 print(f"       crop check failed for {cand['title'][5:60]}, trying next")
                 continue
             q = measure(face_p) or {}
