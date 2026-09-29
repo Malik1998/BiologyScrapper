@@ -55,6 +55,11 @@ def main():
                      in_slack_window=a - SLACK <= lo and hi <= b + SLACK)
             total += 1
             outside += not e["in_window"]
+        # recomputed here too: a slot cleared in review leaves build's flags stale
+        have = {k for k, e in s.items() if e.get("status") == "ok"}
+        m["complete_slots"] = len(have)
+        m["has_minimum_set"] = ({"subject_now", "subject_young"} <= have
+                                and bool(have & {"father_40s", "mother_40s"}))
         good = {k for k, e in s.items() if e.get("status") == "ok" and e.get("in_window")}
         m["strict_minimum_set"] = ({"subject_now", "subject_young"} <= good
                                    and bool(good & {"father_40s", "mother_40s"}))
