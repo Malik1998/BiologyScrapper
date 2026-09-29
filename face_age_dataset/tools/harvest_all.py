@@ -124,6 +124,10 @@ def main():
                     help="answer web searches from this file (filled in a browser by "
                          "browser_bridge.py) instead of ddgs; unanswered queries go "
                          "to work/browser_queries.json")
+    ap.add_argument("--strict-ages", action="store_true",
+                    help="admit a photo only if both ends of its age range are in the window")
+    ap.add_argument("--web-gap", type=float, default=0,
+                    help="min seconds between web searches (default websearch.GAP)")
     args = ap.parse_args()
 
     seed = json.load(open(os.path.join(os.path.dirname(__file__), "seed_people.json")))
@@ -178,6 +182,10 @@ def main():
     C.MIN_GAP = args.gap if args.gap else 1.0
     import build
     build.USE_WEB = not args.no_web
+    build.STRICT_AGES = args.strict_ages
+    if args.web_gap:
+        import websearch
+        websearch.GAP = args.web_gap
     if args.web_cache:
         import websearch
         websearch.CACHE = json.load(open(args.web_cache)) if os.path.exists(args.web_cache) else {}

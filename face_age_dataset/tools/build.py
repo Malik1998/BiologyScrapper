@@ -5,6 +5,8 @@ Commons categories) so adding a person costs one name.
 """
 
 import json
+import re
+from urllib.parse import unquote
 import os
 import shutil
 import sys
@@ -197,6 +199,14 @@ def _web_ok(s):
     return (s["face"].get("identity") or 0) >= websearch.WEB_ID_MIN
 
 
+def _strictly_in(birth, date, lo, hi):
+    from check_ages import age_bounds
+    if not date:
+        return False
+    a, b = age_bounds(birth, date)
+    return lo <= a and b <= hi
+
+
 def crop_face(src, box, dest, pad=0.55):
     img = cv2.imread(src)
     if img is None:
@@ -209,6 +219,24 @@ def crop_face(src, box, dest, pad=0.55):
     x1, y1 = int(min(w, cx + half)), int(min(h, cy + half))
     cv2.imwrite(dest, img[y0:y1, x0:x1])
     return True
+
+
+# File titles that name something other than a photograph of a face. Every
+# pattern here comes from a pick rejected in review: a banknote engraving
+# (Bhumibol), a protest mural (Ninoy Aquino), a film poster (Kinski as
+# Aguirre), a portrait painting (Guillaume), a tin with a printed portrait
+# (Beatrix on Oranje Hagel), a green-card scan (Eduardo Bolsonaro).
+NOT_A_PHOTO = re.compile(
+    r"banknote|bank ?note|\bstamps?\b|postage|\bcoins?\b(?! toss)|"
+    r"poster\b|affiche|mural|graffiti|painting|oil on canvas|portrait by|schilderij|gem[aä]lde|"
+    r"\bdrawing|sketch|caricature|cartoon|illustration|statue|sculpture|\bbust\b|wax ?(figure|museum|work)|"
+    r"oranje hagel|\bblik\b|souvenir|"
+    r"green card|permanent resident|passport|\bid card|identity card", re.I)
+# Only admit a photo when both ends of its possible age range are in the
+# window, not just the middle (185 photos dated to a bare year sat one year
+# outside). Off by default until the policy is decided; harvest_all
+# --strict-ages turns it on.
+STRICT_AGES = False
 
 
 def build_person(name, slug=None, top=60, qid=None, father_qid=None,
@@ -270,6 +298,17 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         "slots": {},
     }
 
+    # each slot is checked against its relatives' faces too: a candidate that
+    # matches the son or the mother better than the person asked for is out
+    relatives = {"subject": subj, "father": father, "mother": mother}
+    rel_refs = {}
+
+    def rel_ref(role):
+        if role not in rel_refs:
+            q = relatives.get(role)
+            rel_refs[role] = reference_embedding(q, cache) if q else None
+        return rel_refs[role]
+
     for slot, (p, lo, hi) in people.items():
         if slot in prev:
             meta["slots"][slot] = prev[slot]
@@ -306,8 +345,16 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
                             # where one photo completes a minimum set
                             use_web=web_slots is None or slot in web_slots)
         rejected = rejected_urls()
+        # a file already used in another slot of this person is not a second photo
+        used = {e.get("source_file_url") for e in list(prev.values()) + list(meta["slots"].values())
+                if e.get("status") == "ok"}
         rows = [r for r in rows
-                if r.get("page") not in rejected and r.get("file_url") not in rejected]
+                if r.get("page") not in rejected and r.get("file_url") not in rejected
+                and r.get("file_url") not in used
+                and not NOT_A_PHOTO.search(unquote(str(r.get("title") or "") + " "
+                                                   + str(r.get("search_title") or "")))]
+        if STRICT_AGES:
+            rows = [r for r in rows if _strictly_in(p["birth"], r.get("date"), lo, hi)]
         entry["candidates_found"] = len(rows)
         if not rows:
             entry["reason"] = "no dated photos in age range"
@@ -324,8 +371,10 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
             # then just "biggest face", which in a group photo is a coin flip.
             entry["identity_check"] = "unavailable"
             print("       ! no reference face; identity check disabled")
+        others = [r for r in (rel_ref(k) for k in ("subject", "father", "mother")
+                              if relatives.get(k) is not p) if r is not None]
         scored = F.run(rows, os.path.join(cache, slot), top=top, ref_emb=ref,
-                       identity_min=THRESH.get(slot, 0.30))
+                       identity_min=THRESH.get(slot, 0.30), other_refs=others)
 
         usable = [s for s in scored if s["face"].get("score", 0) > 0 and _web_ok(s)]
         entry["candidates_scored"] = len(scored)
@@ -337,7 +386,7 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
             # relaxed and hand the result to the human review clearly labelled.
             relaxed = max(0.18, THRESH.get(slot, 0.30) - 0.10)
             scored = F.run(rows, os.path.join(cache, slot), top=top, ref_emb=ref,
-                           identity_min=relaxed)
+                           identity_min=relaxed, other_refs=others)
             usable = [s for s in scored if s["face"].get("score", 0) > 0 and _web_ok(s)]
             if usable:
                 low_conf = True

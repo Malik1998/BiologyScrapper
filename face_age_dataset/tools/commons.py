@@ -280,9 +280,12 @@ def age_on(birth, taken):
         a = y - by - ((mo, d) < (bm, bd))
         return a, a, 0
     if prec == "month":
-        lo = y - by - ((mo, 31) < (bm, bd))
-        hi = y - by - ((mo, 1) < (bm, bd))
-        return round((lo + hi) / 2), lo, 1
+        # youngest on the 1st of the month, oldest on the last day; these were
+        # swapped, so a photo from the birthday month could pass the window
+        # check a year too young
+        lo = y - by - ((mo, 1) < (bm, bd))
+        hi = y - by - ((mo, 31) < (bm, bd))
+        return round((lo + hi) / 2), lo, hi - lo
     lo = y - by - 1
     hi = y - by
     return round((lo + hi) / 2), lo, 1

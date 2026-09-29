@@ -108,8 +108,15 @@ def apply():
     json.dump(done, open(VERDICTS, "w"), ensure_ascii=False, indent=1)
 
 
+COMMONS_VERDICTS = os.path.join(ROOT, "work", "commons_review.json")
+
+
 def rejected_urls():
+    """Every pick rejected in a visual review, web or Commons, so a re-run
+    does not choose the same wrong file again."""
     done = json.load(open(VERDICTS)) if os.path.exists(VERDICTS) else {}
+    if os.path.exists(COMMONS_VERDICTS):
+        done = {**json.load(open(COMMONS_VERDICTS)), **done}
     urls = set()
     for v in done.values():
         urls.update(v.get("rejected_urls", []))

@@ -103,7 +103,7 @@ def url_for(c, width=1280):
     return thumb_url(c["title"], width, orig_w=c.get("w"))
 
 
-def analyse(path, ref_emb=None, identity_min=None, min_interocular=None):
+def analyse(path, ref_emb=None, identity_min=None, min_interocular=None, other_refs=None):
     identity_min = IDENTITY_MIN if identity_min is None else identity_min
     img = cv2.imread(path)
     if img is None:
@@ -153,6 +153,7 @@ def analyse(path, ref_emb=None, identity_min=None, min_interocular=None):
             "interocular": interocular,
             "eye_visibility": eye_vis,
             "identity": sims[idx],
+            "_emb": embs[idx] if ref_emb is not None else None,
         })
     if not scored:
         return {"n_faces": 0, "score": 0.0, "img_w": w, "img_h": h,
@@ -167,6 +168,16 @@ def analyse(path, ref_emb=None, identity_min=None, min_interocular=None):
             return {"n_faces": n, "score": 0.0, "img_w": w, "img_h": h,
                     "identity": main["identity"], "reason": "identity_below_threshold"}
         others = [s for s in scored[1:]]
+        # Relatives look alike, and Commons files them under each other: the
+        # "father" slot got the son's own photo (Kara-Murza), the "young"
+        # slot the mother (Caroline Kennedy got Jackie). A face that matches
+        # a relative's reference better than this person's is not this person.
+        if other_refs and main.get("_emb") is not None:
+            rel = max(cosine(main["_emb"], r) for r in other_refs)
+            if rel >= main["identity"]:
+                return {"n_faces": n, "score": 0.0, "img_w": w, "img_h": h,
+                        "identity": main["identity"], "relative_identity": round(rel, 3),
+                        "reason": "closer_to_relative"}
     else:
         # Without a reference we cannot say which face is the subject. In a
         # group shot "biggest face" is a guess -- it once returned a man for
@@ -207,6 +218,7 @@ def analyse(path, ref_emb=None, identity_min=None, min_interocular=None):
              + 0.05 * tilt_s + 0.23 * id_s
              + 0.08 * main["eye_visibility"]) * min(main["conf"] / 0.9, 1.0)
 
+    main = {k: v for k, v in main.items() if k != "_emb"}
     return {"n_faces": n, "img_w": w, "img_h": h, "score": round(float(score), 4),
             "id_margin": margin,
             "parts": {"size": round(size_s, 3), "frontal": round(front_s, 3),
@@ -224,7 +236,7 @@ HIRES_MIN_EYE = 40.0
 HIRES_BUDGET = 15       # per slot; each rescue is a multi-MB download
 
 
-def run(cands, cache_dir, top=40, ref_emb=None, identity_min=None):
+def run(cands, cache_dir, top=40, ref_emb=None, identity_min=None, other_refs=None):
     os.makedirs(cache_dir, exist_ok=True)
     out = []
     budget = HIRES_BUDGET
@@ -238,7 +250,7 @@ def run(cands, cache_dir, top=40, ref_emb=None, identity_min=None):
         if not os.path.exists(dest):
             if not fetch(url_for(c), dest):
                 continue
-        a = analyse(dest, ref_emb=ref_emb, identity_min=identity_min)
+        a = analyse(dest, ref_emb=ref_emb, identity_min=identity_min, other_refs=other_refs)
         if not a:
             continue
         if (a.get("reason") == "face_too_small" and budget > 0
@@ -247,7 +259,7 @@ def run(cands, cache_dir, top=40, ref_emb=None, identity_min=None):
             big = os.path.join(cache_dir, "big_" + os.path.basename(dest))
             if os.path.exists(big) or (budget and fetch(url_for(c, width), big)):
                 budget -= 1
-                a2 = analyse(big, ref_emb=ref_emb, identity_min=identity_min,
+                a2 = analyse(big, ref_emb=ref_emb, identity_min=identity_min, other_refs=other_refs,
                              min_interocular=HIRES_MIN_EYE)
                 if a2 and a2.get("score", 0) > 0:
                     a2["from_hires"] = True
