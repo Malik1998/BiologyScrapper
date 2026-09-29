@@ -322,8 +322,13 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
             old = json.load(open(mp))
             if old.get("subject", {}).get("qid") == subj["qid"]:
                 prev = {k: v for k, v in old.get("slots", {}).items()
-                        if v.get("status") == "ok"
-                        and os.path.isfile(os.path.join(DATA, v.get("file", "")))}
+                        if (v.get("status") == "ok"
+                            and os.path.isfile(os.path.join(DATA, v.get("file", ""))))
+                        # a slot whose picks kept failing visual review is
+                        # closed: Commons has only more copies of the same
+                        # wrong photo left (Arlene Dahl as Lorenzo Lamas in
+                        # three files); fill it by hand or not at all
+                        or v.get("locked")}
         except Exception:
             pass
 
