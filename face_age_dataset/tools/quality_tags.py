@@ -8,7 +8,9 @@ measures on the saved face crop:
     pitch      up/down tilt: nose height between eye line and mouth line,
                relative to a frontal face
     roll       in-plane tilt of the eye line, degrees
-    smile      mouth width / eye distance (broad smiles and open mouths are wide)
+    happy      P(happy) from OpenCV Zoo's expression model (> HAPPY = smiling);
+               mouth width / eye distance is kept as `smile` but did not
+               separate smiles from neutral faces, so it is no longer judged
     sharpness  Laplacian variance of the face
     colour     mean saturation of the face centre (> COLOUR_SAT = colour photo)
 
@@ -33,7 +35,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 import face as F  # noqa: E402
 
 DATA = os.path.join(os.path.dirname(__file__), "..", "dataset")
-LIMITS = {"yaw": 0.25, "pitch": 0.08, "roll": 12.0, "smile": 0.90, "sharpness": 20.0}
+LIMITS = {"yaw": 0.25, "pitch": 0.08, "roll": 12.0, "sharpness": 20.0}
+HAPPY = 0.5
 COLOUR_SAT = 0.20
 PITCH_FRONTAL = None      # set from the data: median of the ratio
 
@@ -62,7 +65,10 @@ def measure(path):
     sharp = float(cv2.Laplacian(gray, cv2.CV_64F).var()) if gray is not None else 0.0
     c = img[h // 4:3 * h // 4, w // 4:3 * w // 4]
     sat = float(cv2.cvtColor(c, cv2.COLOR_BGR2HSV)[..., 1].mean()) / 255
+    from expression import expression
+    ex = expression(img, f) or {}
     return {"face_found": True, "yaw": round(yaw, 3), "pitch_ratio": round(pitch_ratio, 3),
+            "happy": ex.get("happy"), "expression": max(ex, key=ex.get) if ex else None,
             "roll": round(roll, 1), "smile": round(smile, 3), "sharpness": round(sharp, 1),
             "saturation": round(sat, 3), "interocular": round(io, 1)}
 
@@ -77,8 +83,8 @@ def judge(q, pitch0):
         issues.append("looking up/down")
     if q["roll"] > LIMITS["roll"]:
         issues.append("head tilted")
-    if q["smile"] > LIMITS["smile"]:
-        issues.append("broad smile")
+    if q.get("happy") is None or q["happy"] > HAPPY:
+        issues.append("smiling")
     if q["sharpness"] < LIMITS["sharpness"]:
         issues.append("blurry")
     return not issues, issues

@@ -167,7 +167,8 @@ def main():
         for mp in sorted(glob.glob(os.path.join(DATA, "*", "meta.json"))):
             m = json.load(open(mp))
             if all(e.get("status") == "ok" and (not args.requalify
-                   or (e.get("qc") or {}).get("ok_for_rating", True) or e.get("source") == "web")
+                   or ((e.get("qc") or {}).get("ok_for_rating", True)
+                       and (e.get("qc") or {}).get("colour", True)) or e.get("source") == "web")
                    for e in m["slots"].values()):
                 continue
             nm = m.get("query_name") or m["subject"]["name"]

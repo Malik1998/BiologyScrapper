@@ -423,8 +423,9 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         old = None
         if slot in prev:
             e0 = prev[slot]
+            q0 = e0.get("qc") or {}
             if not (REQUALIFY and e0.get("status") == "ok" and e0.get("source") != "web"
-                    and not (e0.get("qc") or {}).get("ok_for_rating", True)):
+                    and not (q0.get("ok_for_rating", True) and q0.get("colour", True))):
                 meta["slots"][slot] = e0
                 continue
             old = olds[slot] = e0
@@ -523,7 +524,11 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
         os.makedirs(outdir, exist_ok=True)
         ext = ".jpg"
         from quality_tags import measure, judge
-        best = fallback = None
+        from quality_tags import COLOUR_SAT
+        best = fallback = first_ok = None
+        # an old photo that is already rating-ready (only black-and-white)
+        # gives way to a colour one alone
+        old_ok = old is not None and (old.get("qc") or {}).get("ok_for_rating")
         tried = []
         for cand in usable[:12]:
             full = os.path.join(outdir, f"{slot}_try{len(tried)}{ext}")
@@ -540,18 +545,22 @@ def build_person(name, slug=None, top=60, qid=None, father_qid=None,
                 continue
             q = measure(face_p) or {}
             ok, issues = judge(q, PITCH_FRONTAL)
-            q.update(ok_for_rating=ok, issues=issues)
+            colour = bool(q.get("saturation", 0) > COLOUR_SAT)
+            q.update(ok_for_rating=ok, issues=issues, colour=colour)
             cand["_qc"], cand["_files"] = q, (full, face_p)
-            # raters need frontal, level, neutral, sharp faces: take the best
-            # candidate that is, not just the best-scored one
-            if ok:
+            # raters need frontal, level, neutral, sharp faces, in colour when
+            # there is one: take the best candidate that is, not just the
+            # best-scored one
+            if ok and colour:
                 best = cand
                 break
+            if ok and first_ok is None and not old_ok:
+                first_ok = cand
             if fallback is None and old is None:
                 fallback = cand
             if old is None and len(tried) >= 5 and fallback is not None:
                 break
-        best = best or fallback
+        best = best or first_ok or fallback
         keep = {best["_files"][0], best["_files"][1]} if best else set()
         for pair in tried:
             for q in pair:
