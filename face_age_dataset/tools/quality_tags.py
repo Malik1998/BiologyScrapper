@@ -98,8 +98,12 @@ def main():
         for k, e in m["slots"].items():
             if e.get("status") == "ok":
                 measured[(mp, k)] = measure(os.path.join(DATA, e["face_crop"]))
+    # Judge against the fixed reference the harvest and manual picks use, not
+    # this run's median: the median drifts as photos are added, and a face on
+    # the edge then flips between runs (Toby Stephens, Dale Earnhardt).
+    from build import PITCH_FRONTAL as pitch0
     ratios = sorted(q["pitch_ratio"] for q in measured.values() if q and q.get("face_found"))
-    pitch0 = ratios[len(ratios) // 2]
+    print(f"median pitch ratio this run: {ratios[len(ratios) // 2]:.3f} (judged against {pitch0})")
     from collections import Counter
     issues_n, n_ok, n = Counter(), 0, 0
     sets = sets_col = full = full_col = 0

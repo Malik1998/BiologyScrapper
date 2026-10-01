@@ -42,8 +42,11 @@ def main(slug, slot, image, page, date, evidence):
         sys.exit("no reference face for " + who["name"])
 
     raw = os.path.join(cache, f"manual_{slot}.jpg")
-    req = urllib.request.Request(image, headers={"User-Agent": "Mozilla/5.0"})
-    open(raw, "wb").write(urllib.request.urlopen(req, timeout=30).read())
+    if os.path.isfile(image):          # e.g. a frame taken from a dated video
+        shutil.copyfile(image, raw)
+    else:
+        req = urllib.request.Request(image, headers={"User-Agent": "Mozilla/5.0"})
+        open(raw, "wb").write(urllib.request.urlopen(req, timeout=30).read())
     img = cv2.imread(raw)
     if img is None:
         sys.exit("not an image")
