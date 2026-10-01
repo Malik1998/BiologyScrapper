@@ -38,6 +38,7 @@ def complete_sets(rating=False, slack=False, min_set=False, colour=False, intern
         q = e.get("qc") or {}
         return (e.get("status") == "ok" and (internal or e.get("publishable"))
                 and e.get(win)                               # run check_ages.py first
+                and not e.get("visual_issue")                # failed review by eye
                 and (not rating or q.get("ok_for_rating"))
                 and (not colour or q.get("colour")))
     for mp in sorted(glob.glob(os.path.join(DATA, "*", "meta.json"))):
