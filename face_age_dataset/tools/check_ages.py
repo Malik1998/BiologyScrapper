@@ -50,6 +50,15 @@ def main():
             if e.get("status") != "ok":
                 continue
             lo, hi = age_bounds(e["person_birth"], e["date_taken"])
+            if "date_span" in e:
+                # the source only bounds the date ("circa 1975", "1970s",
+                # "before 1994"); a span of None is unbounded and fails
+                sp = e["date_span"]
+                if sp is None:
+                    lo, hi = -999, 999
+                else:
+                    lo = min(lo, age_bounds(e["person_birth"], sp[0])[0])
+                    hi = max(hi, age_bounds(e["person_birth"], sp[1])[1])
             a, b = WINDOW[k]
             e.update(age_min=lo, age_max=hi, in_window=a <= lo and hi <= b,
                      in_slack_window=a - SLACK <= lo and hi <= b + SLACK)

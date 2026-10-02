@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import build  # noqa: E402
 import face as F  # noqa: E402
 from identity import wikidata_by_qid, embed_faces, cosine  # noqa: E402
-from quality_tags import measure, judge, COLOUR_SAT  # noqa: E402
+from quality_tags import measure, judge, tinted_bw, COLOUR_SAT  # noqa: E402
 from check_ages import age_bounds  # noqa: E402
 
 ROLE = {"subject_now": "subject", "subject_young": "subject",
@@ -75,8 +75,9 @@ def main(slug, slot, image, page, date, evidence):
     build.crop_face(raw, faces[i][:4], tmp_face)
     q = measure(tmp_face) or {}
     ok, issues = judge(q, build.PITCH_FRONTAL)
+    tinted = tinted_bw(tmp_full, date)
     q.update(ok_for_rating=ok, issues=issues,
-             colour=bool(q.get("saturation", 0) > COLOUR_SAT))
+             colour=bool(q.get("saturation", 0) > COLOUR_SAT) and not tinted)
 
     old = m["slots"].get(slot, {})
     if old.get("status") == "ok":
@@ -99,7 +100,7 @@ def main(slug, slot, image, page, date, evidence):
         "source": "web", "source_page": page, "source_file_url": image,
         "license": None, "identity_cosine": round(ids[i], 3),
         "faces_in_photo": len(faces), "needs_visual_check": True,
-        "manual": True, "qc": q,
+        "manual": True, "qc": q, "tinted_bw": tinted,
         "replaced": ({"page": old.get("source_page"), "issues": (old.get("qc") or {}).get("issues")}
                      if old.get("status") == "ok" else None),
     }

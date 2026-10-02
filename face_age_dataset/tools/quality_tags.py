@@ -39,6 +39,28 @@ LIMITS = {"yaw": 0.25, "pitch": 0.08, "roll": 12.0, "sharpness": 20.0}
 HAPPY = 0.5
 COLOUR_SAT = 0.20
 PITCH_FRONTAL = None      # set from the data: median of the ratio
+TINT_CHROMA = 2.15        # minor-axis spread of (a*, b*) over the whole photo
+TINT_BEFORE = 1975        # only old photos: modern ones can be monochrome by design
+
+
+def tinted_bw(path, taken):
+    """A yellowed or sepia black-and-white print has saturated pixels, so the
+    saturation test calls it colour (Hirohito 1947). Its colours all lie on one
+    line in the a*b* plane, though; a real colour photo spreads in two
+    directions. Judged on the whole photo, since a face alone is one hue."""
+    try:
+        if int(str(taken)[:4]) >= TINT_BEFORE:
+            return False
+    except ValueError:
+        return False
+    img = cv2.imread(path)
+    if img is None:
+        return False
+    h, w = img.shape[:2]
+    s = 600 / max(h, w)
+    img = cv2.resize(img, (max(1, int(w * s)), max(1, int(h * s))))
+    ab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB).reshape(-1, 3)[:, 1:].astype(float)
+    return float(np.sqrt(np.linalg.eigvalsh(np.cov(ab.T))[0])) < TINT_CHROMA
 
 
 def measure(path):
@@ -115,8 +137,11 @@ def main():
                 continue
             q = measured.get((mp, k)) or {}
             ok, iss = judge(q, pitch0)
+            # tinted_bw set by eye stays; the automatic test only adds to it
+            e["tinted_bw"] = bool(e.get("tinted_bw")) or tinted_bw(
+                os.path.join(DATA, e["file"]), e.get("date_taken"))
             q.update(ok_for_rating=ok, issues=iss,
-                     colour=bool(q.get("saturation", 0) > COLOUR_SAT))
+                     colour=bool(q.get("saturation", 0) > COLOUR_SAT) and not e["tinted_bw"])
             e["qc"] = q
             n += 1
             n_ok += ok

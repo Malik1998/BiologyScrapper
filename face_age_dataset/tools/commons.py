@@ -212,11 +212,22 @@ DATE_PATTERNS = [
 ]
 
 
+# "before 1994", "circa 1960", "1950s", "1990-1995", "1987?" name a bound or a
+# span, not the shot date; reading the year as exact put two Bassel al-Assad
+# photos inside the age window
+VAGUE = re.compile(r"\b(before|after|circa|ca|c|around|approx\w*|between|or|probably|possibly|"
+                   r"unknown|undated|vor|nach|um|avant|apr[eè]s|vers|до|после|около|примерно)\b\.?"
+                   r"|\?|\b\d{4}s\b|\b\d{4}\s*[-–/]\s*\d{4}\b", re.I)
+
+
 def parse_date(raw):
-    """Return (year, month, day|None, precision) from a messy Commons date string."""
+    """Return (year, month, day|None, precision) from a messy Commons date string,
+    or None when the string only bounds the date."""
     if not raw:
         return None
     txt = re.sub(r"<[^>]+>", " ", str(raw))
+    if VAGUE.search(txt):
+        return None
     for pat, prec in DATE_PATTERNS:
         m = pat.search(txt)
         if m:
