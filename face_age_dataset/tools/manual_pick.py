@@ -7,7 +7,11 @@ is still chosen and checked by identity against the Wikidata reference, and
 the photo is measured like any other; the old photo is recorded under
 `replaced` and its files are moved to work/replaced/.
 
-    python tools/manual_pick.py SLUG SLOT IMAGE_URL PAGE_URL DATE "EVIDENCE"
+    python tools/manual_pick.py SLUG SLOT IMAGE_URL PAGE_URL DATE "EVIDENCE" [REF.npy]
+
+REF.npy is a reference embedding for people without a Wikidata photo (P18),
+e.g. the mean of a face cluster across captioned press photos; the entry
+records that the identity check used it.
 """
 
 import json
@@ -17,6 +21,7 @@ import sys
 import urllib.request
 
 import cv2
+import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
 import build  # noqa: E402
@@ -30,14 +35,14 @@ ROLE = {"subject_now": "subject", "subject_young": "subject",
 MIN_ID = 0.36          # SFace same-identity threshold; web hits need a firm match
 
 
-def main(slug, slot, image, page, date, evidence):
+def main(slug, slot, image, page, date, evidence, ref_path=None):
     mp = os.path.join(build.DATA, slug, "meta.json")
     m = json.load(open(mp))
     who = m[ROLE[slot]]
     p = wikidata_by_qid(who["qid"])
     cache = os.path.join(build.WORK, "cache", slug)
     os.makedirs(cache, exist_ok=True)
-    ref = build.reference_embedding(p, cache)
+    ref = np.load(ref_path) if ref_path else build.reference_embedding(p, cache)
     if ref is None:
         sys.exit("no reference face for " + who["name"])
 
@@ -100,7 +105,7 @@ def main(slug, slot, image, page, date, evidence):
         "source": "web", "source_page": page, "source_file_url": image,
         "license": None, "identity_cosine": round(ids[i], 3),
         "faces_in_photo": len(faces), "needs_visual_check": True,
-        "manual": True, "qc": q, "tinted_bw": tinted,
+        "manual": True, "qc": q, "reference_override": ref_path, "tinted_bw": tinted,
         "replaced": ({"page": old.get("source_page"), "issues": (old.get("qc") or {}).get("issues")}
                      if old.get("status") == "ok" else None),
     }
@@ -109,4 +114,4 @@ def main(slug, slot, image, page, date, evidence):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:7])
+    main(*sys.argv[1:8])
